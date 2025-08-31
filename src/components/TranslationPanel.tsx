@@ -70,9 +70,11 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
     translationService,
     translationHistory,
     errors,
+    geminiApiKey,
     batchTranslate,
     setTranslationService,
     setLanguages,
+    updateGeminiApiKey,
     getSupportedLanguages,
     canTranslate,
     clearErrors,
@@ -307,10 +309,26 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
                   onChange={(e) => setTranslationService(e.target.value as any)}
                   label="翻訳サービス"
                 >
-                  <MenuItem value="google">Google Translate</MenuItem>
-                  <MenuItem value="libretranslate">LibreTranslate</MenuItem>
+                  <MenuItem value="google">Google Translate (無料)</MenuItem>
+                  <MenuItem value="gemini">Google Gemini (要APIキー)</MenuItem>
+                  <MenuItem value="libretranslate">LibreTranslate (無料)</MenuItem>
                 </Select>
               </FormControl>
+
+              {/* Gemini API Key Input */}
+              {translationService === 'gemini' && (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Gemini API Key"
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => updateGeminiApiKey(e.target.value)}
+                  placeholder="Google AI Studio で取得したAPIキーを入力"
+                  helperText="https://makersuite.google.com/app/apikey でAPIキーを取得できます"
+                  sx={{ mb: 2 }}
+                />
+              )}
               
               <FormControlLabel
                 control={

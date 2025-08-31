@@ -35,9 +35,19 @@ export const useTranslation = () => {
     errors: []
   })
 
+  const [geminiApiKey, setGeminiApiKey] = useState<string>('')
+
   const setTranslationService = useCallback((service: TranslationService) => {
     translationManager.setService(service)
+    if (service === 'gemini') {
+      translationManager.setGeminiApiKey(geminiApiKey)
+    }
     setState(prev => ({ ...prev, translationService: service }))
+  }, [geminiApiKey])
+
+  const updateGeminiApiKey = useCallback((apiKey: string) => {
+    setGeminiApiKey(apiKey)
+    translationManager.setGeminiApiKey(apiKey)
   }, [])
 
   const setLanguages = useCallback((from: string, to: string) => {
@@ -168,10 +178,12 @@ export const useTranslation = () => {
 
   return {
     ...state,
+    geminiApiKey,
     translate,
     batchTranslate,
     setTranslationService,
     setLanguages,
+    updateGeminiApiKey,
     testTranslationService,
     clearHistory,
     clearErrors,

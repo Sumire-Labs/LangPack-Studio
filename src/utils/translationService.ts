@@ -140,6 +140,151 @@ class GoogleTranslateService {
   }
 }
 
+// Google Gemini AI translation service
+class GeminiTranslateService {
+  private apiKey: string
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey
+  }
+
+  private createTranslationPrompt(text: string, from: string, to: string): string {
+    const languageNames: { [key: string]: string } = {
+      'en': 'English',
+      'ja': 'Japanese',
+      'ko': 'Korean',
+      'zh': 'Chinese (Simplified)',
+      'zh-TW': 'Chinese (Traditional)',
+      'de': 'German',
+      'fr': 'French',
+      'es': 'Spanish',
+      'pt': 'Portuguese',
+      'ru': 'Russian',
+      'it': 'Italian',
+      'nl': 'Dutch',
+      'sv': 'Swedish',
+      'no': 'Norwegian',
+      'da': 'Danish',
+      'fi': 'Finnish'
+    }
+
+    const fromLang = languageNames[from] || from
+    const toLang = languageNames[to] || to
+
+    return `You are a professional translator specializing in Minecraft mod localization. Please translate the following text from ${fromLang} to ${toLang}.
+
+IMPORTANT RULES:
+- Provide ONLY the translated text, no explanations or additional content
+- Preserve any Minecraft-specific terms (like "Creeper", "Redstone", etc.) appropriately
+- Keep formatting characters like %s, %d, ${...} unchanged
+- Maintain the same tone and style as the original
+- For UI text, keep translations concise and appropriate for interface elements
+
+Text to translate: "${text}"
+
+Translation:`
+  }
+
+  async translate(request: TranslationRequest): Promise<TranslationResult> {
+    try {
+      const prompt = this.createTranslationPrompt(request.text, request.from, request.to)
+      
+      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1000,
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid Gemini API response format')
+      }
+
+      let translatedText = data.candidates[0].content.parts[0].text.trim()
+      
+      // Clean up the response - remove any extra formatting or explanations
+      translatedText = translatedText.replace(/^Translation:\s*/i, '')
+      translatedText = translatedText.replace(/^["']|["']$/g, '') // Remove quotes if present
+      
+      return {
+        originalText: request.text,
+        translatedText: translatedText || request.text,
+        from: request.from,
+        to: request.to,
+        confidence: 0.9 // Gemini typically provides high quality translations
+      }
+    } catch (error) {
+      throw new Error(`Gemini translation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  async batchTranslate(request: BatchTranslationRequest, onProgress?: (progress: number) => void): Promise<BatchTranslationResult> {
+    const result: BatchTranslationResult = {
+      success: false,
+      translations: [],
+      failed: [],
+      totalProcessed: 0,
+      totalFailed: 0
+    }
+
+    const total = request.entries.length
+    
+    for (let i = 0; i < request.entries.length; i++) {
+      const entry = request.entries[i]
+      
+      try {
+        const translationResult = await this.translate({
+          text: entry.text,
+          from: request.from,
+          to: request.to
+        })
+
+        result.translations.push({
+          key: entry.key,
+          original: entry.text,
+          translated: translationResult.translatedText,
+          confidence: translationResult.confidence
+        })
+        result.totalProcessed++
+      } catch (error) {
+        result.failed.push({
+          key: entry.key,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+        result.totalFailed++
+      }
+
+      const progress = ((i + 1) / total) * 100
+      onProgress?.(progress)
+
+      // Add delay to respect rate limits (Gemini allows 60 requests per minute)
+      if (i < request.entries.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    result.success = result.totalFailed < total
+    return result
+  }
+}
+
 // Alternative free translation service using LibreTranslate (if available)
 class LibreTranslateService {
   private baseUrl: string
@@ -254,34 +399,74 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'fi', name: 'Finnish', nativeName: 'Suomi' }
 ]
 
-export type TranslationService = 'google' | 'libretranslate'
+export type TranslationService = 'google' | 'gemini' | 'libretranslate'
 
 class TranslationManager {
   private googleService = new GoogleTranslateService()
   private libreTranslateService = new LibreTranslateService()
+  private geminiService: GeminiTranslateService | null = null
   private currentService: TranslationService = 'google'
+  private geminiApiKey: string = ''
 
   setService(service: TranslationService) {
     this.currentService = service
+  }
+
+  setGeminiApiKey(apiKey: string) {
+    this.geminiApiKey = apiKey
+    this.geminiService = apiKey ? new GeminiTranslateService(apiKey) : null
   }
 
   getCurrentService(): TranslationService {
     return this.currentService
   }
 
+  private getService() {
+    switch (this.currentService) {
+      case 'google':
+        return this.googleService
+      case 'gemini':
+        if (!this.geminiService) {
+          throw new Error('Gemini API key not set. Please configure your API key first.')
+        }
+        return this.geminiService
+      case 'libretranslate':
+        return this.libreTranslateService
+      default:
+        return this.googleService
+    }
+  }
+
   async translate(request: TranslationRequest): Promise<TranslationResult> {
-    const service = this.currentService === 'google' ? this.googleService : this.libreTranslateService
+    const service = this.getService()
     return await service.translate(request)
   }
 
   async batchTranslate(request: BatchTranslationRequest, onProgress?: (progress: number) => void): Promise<BatchTranslationResult> {
-    const service = this.currentService === 'google' ? this.googleService : this.libreTranslateService
+    const service = this.getService()
     return await service.batchTranslate(request, onProgress)
   }
 
   async testService(service: TranslationService = this.currentService): Promise<boolean> {
     try {
-      const testService = service === 'google' ? this.googleService : this.libreTranslateService
+      let testService
+      switch (service) {
+        case 'google':
+          testService = this.googleService
+          break
+        case 'gemini':
+          if (!this.geminiService) {
+            return false
+          }
+          testService = this.geminiService
+          break
+        case 'libretranslate':
+          testService = this.libreTranslateService
+          break
+        default:
+          return false
+      }
+      
       await testService.translate({
         text: 'Hello',
         from: 'en',
