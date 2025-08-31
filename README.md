@@ -35,6 +35,27 @@
 - **翻訳結果編集**: 手動での修正も可能
 - **進行状況表示**: リアルタイムで翻訳進捗を確認
 
+### 🎯 **翻訳品質チェック** (NEW!)
+- **包括的品質分析**: プレースホルダー、フォーマット、一貫性をチェック
+- **スマートスコアリング**: 0-100点での品質評価
+- **詳細レポート**: 問題点と改善提案を表示
+- **フィルタリング機能**: エラー・警告・情報レベルで絞り込み
+- **エクスポート対応**: 品質レポートのJSON出力
+
+### 📊 **翻訳統計・レポート** (NEW!)
+- **使用状況分析**: サービス別・言語ペア別の利用統計
+- **コスト計算**: 各翻訳APIの推定コストを自動算出
+- **パフォーマンス追跡**: 翻訳セッションの履歴と品質スコア
+- **レコメンデーション**: 使用パターンに基づく改善提案
+- **データエクスポート**: CSV・JSON形式での統計出力
+
+### 🔌 **API統合** (NEW!)
+- **RESTful API**: 外部ツールとの連携を可能に
+- **認証システム**: API キーによるセキュアなアクセス
+- **完全ドキュメント**: 使用例付きのAPI仕様書
+- **リクエストログ**: API使用履歴の追跡
+- **ヘルスチェック**: システム状態の監視
+
 ### 📦 **Minecraft互換リソースパック生成**
 - **完全準拠**: pack.mcmetaの自動生成
 - **バージョン対応**: 各Minecraftバージョンに最適化
@@ -81,7 +102,9 @@ https://github.com/Sumire-Labs/LangPack-Studio/releases
 1. **📁 ファイルインポート**: 言語ファイルをドラッグ&ドロップ
 2. **👁️ プレビュー**: 読み込まれた内容を確認
 3. **🌐 翻訳**: お好みの翻訳APIを選択して実行
-4. **📦 生成**: リソースパックを生成してダウンロード
+4. **🎯 品質チェック**: 翻訳品質を自動分析
+5. **📊 統計確認**: コストと使用状況をレポート表示
+6. **📦 生成**: リソースパックを生成してダウンロード
 
 ### 対応ファイル形式
 - `*.json` - Minecraft 1.13以降の標準形式
@@ -125,6 +148,9 @@ npm run electron:build # Electron配布版ビルド
 - **Desktop**: Electron
 - **File Processing**: JSZip, File API
 - **HTTP Client**: Axios
+- **Quality Analysis**: 独自開発の品質チェックエンジン
+- **Statistics**: localStorage + 統計分析システム
+- **API Server**: Express.js風のルーティングシステム
 
 ## 🌍 翻訳API設定
 
@@ -150,6 +176,9 @@ npm run electron:build # Electron配布版ビルド
 | [🏠 Home](https://github.com/Sumire-Labs/LangPack-Studio/wiki) | プロジェクト概要・クイックスタート |
 | [📖 使い方ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/User-Guide) | 詳細な操作手順 |
 | [🌐 翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide) | API設定と翻訳オプション |
+| [🎯 品質チェックガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Quality-Check-Guide) | 翻訳品質分析の使い方 |
+| [📊 統計・レポートガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Statistics-Guide) | 使用統計とコスト分析 |
+| [🔌 API統合ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/API-Guide) | 外部連携とAPI仕様 |
 | [🔧 トラブルシューティング](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Troubleshooting) | よくある問題と解決方法 |
 | [👨‍💻 開発者ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Developer-Guide) | ビルド方法とコントリビューション |
 
@@ -171,17 +200,25 @@ LangPack Studioの改善にご協力ください！
 
 ## 🎯 ロードマップ
 
-### v1.1.0 (予定)
-- [ ] 🎨 カスタムテーマサポート
-- [ ] 📊 翻訳統計・レポート機能
-- [ ] 🔄 自動バックアップ・復元
-- [ ] 🌏 追加言語サポート (タイ語、ベトナム語など)
+### v1.1.0 (完了済み)
+- [x] 🎯 翻訳品質チェック機能
+- [x] 📊 翻訳統計・レポート機能
+- [x] 🔌 API統合システム
+- [x] ✨ Google Gemini API対応
+- [x] 📈 コスト計算・追跡システム
+- [x] 📋 品質レポートエクスポート
 
 ### v1.2.0 (予定)
+- [ ] 🎨 カスタムテーマサポート
+- [ ] 🔄 自動バックアップ・復元
+- [ ] 🌏 追加言語サポート (タイ語、ベトナム語など)
 - [ ] 🤖 機械学習による翻訳品質向上
 - [ ] 👥 チーム共有・コラボレーション機能
+
+### v1.3.0 (予定)
 - [ ] 🔌 プラグインシステム
 - [ ] 📱 モバイル版対応
+- [ ] 🌐 ウェブ版リリース
 
 ### v2.0.0 (未来)
 - [ ] ☁️ クラウド同期
