@@ -42,6 +42,7 @@ interface SidebarProps {
   fileCount: number
   translationCount: number
   isMobile: boolean
+  onSettingsClick: () => void
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -51,7 +52,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCollapsedChange,
   fileCount,
   translationCount,
-  isMobile
+  isMobile,
+  onSettingsClick
 }) => {
   const theme = useTheme()
   const drawerWidth = collapsed ? 80 : 280
@@ -334,7 +336,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         <List>
           <ListItem disablePadding>
             <ListItemButton
-              sx={{ borderRadius: 2, justifyContent: collapsed ? 'center' : 'flex-start' }}
+              onClick={onSettingsClick}
+              sx={{ 
+                borderRadius: 2, 
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1)
+                }
+              }}
             >
               <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 48 }}>
                 <Settings />

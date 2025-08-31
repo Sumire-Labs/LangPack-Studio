@@ -25,6 +25,7 @@ import Header from './components/redesign/Header'
 import MainContent from './components/redesign/MainContent'
 import WelcomeScreen from './components/redesign/WelcomeScreen'
 import FloatingActionBar from './components/redesign/FloatingActionBar'
+import SettingsDialog from './components/redesign/SettingsDialog'
 import { NotificationSnackbar } from './components/MaterialComponents'
 
 // Import hooks
@@ -66,6 +67,7 @@ function AppNew() {
     const hasVisited = localStorage.getItem('langpack_hasVisited')
     return !hasVisited
   })
+  const [showSettings, setShowSettings] = useState(false)
 
   // Hooks
   const {
@@ -310,6 +312,20 @@ function AppNew() {
     showNotification('すべてのデータをリセットしました', 'info')
   }
 
+  const handleSettingsChange = (settings: any) => {
+    // Apply theme changes
+    if (settings.theme !== 'system') {
+      setDarkMode(settings.theme === 'dark')
+      localStorage.setItem('langpack_theme', settings.theme)
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setDarkMode(prefersDark)
+      localStorage.removeItem('langpack_theme')
+    }
+    
+    showNotification('設定を保存しました', 'success')
+  }
+
   // Render
   if (showWelcome) {
     return (
@@ -333,6 +349,7 @@ function AppNew() {
           fileCount={files.length}
           translationCount={translatedEntries.length}
           isMobile={isMobile}
+          onSettingsClick={() => setShowSettings(true)}
         />
 
         {/* Main Content Area */}
@@ -392,6 +409,13 @@ function AppNew() {
           message={notification.message}
           severity={notification.severity}
           onClose={() => setNotification({ ...notification, open: false })}
+        />
+
+        {/* Settings Dialog */}
+        <SettingsDialog
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          onSettingsChange={handleSettingsChange}
         />
       </Box>
     </ThemeProvider>
