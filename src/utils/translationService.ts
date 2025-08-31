@@ -177,7 +177,7 @@ class GeminiTranslateService {
 IMPORTANT RULES:
 - Provide ONLY the translated text, no explanations or additional content
 - Preserve any Minecraft-specific terms (like "Creeper", "Redstone", etc.) appropriately
-- Keep formatting characters like %s, %d, ${...} unchanged
+- Keep formatting characters like %s, %d, \${...} unchanged
 - Maintain the same tone and style as the original
 - For UI text, keep translations concise and appropriate for interface elements
 
