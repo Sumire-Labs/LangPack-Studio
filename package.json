@@ -1,0 +1,96 @@
+{
+  "name": "langpack-studio",
+  "productName": "LangPack Studio",
+  "version": "1.0.0",
+  "description": "✨ Minecraft Mod Language Translation Resource Pack Creator with Material Design 3",
+  "homepage": "https://github.com/Sumire-Labs/LangPack-Studio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sumire-Labs/LangPack-Studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sumire-Labs/LangPack-Studio/issues"
+  },
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "vite",
+    "dev:electron": "wait-on dist/index.html && electron .",
+    "build": "npm run build:vite && npm run build:electron",
+    "build:vite": "vite build",
+    "build:electron": "tsc -p electron",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "minecraft",
+    "resourcepack",
+    "translation",
+    "mod",
+    "langpack",
+    "i18n",
+    "localization",
+    "react",
+    "typescript",
+    "material-ui",
+    "electron",
+    "deepl",
+    "google-translate",
+    "openai"
+  ],
+  "author": {
+    "name": "Sumire Labs",
+    "email": "contact@sumire-labs.com",
+    "url": "https://github.com/Sumire-Labs"
+  },
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.15.0",
+    "@mui/material": "^5.15.0",
+    "@types/jszip": "^3.4.1",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3"
+  },
+  "build": {
+    "appId": "com.langpackstudio.app",
+    "productName": "LangPack Studio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
