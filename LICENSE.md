@@ -1,4 +1,4 @@
-3-Clause BSD License
+The 3-Clause BSD License
 ====================
 
 _Copyright © `<2025>`, `<Sumire Labs>`_  
