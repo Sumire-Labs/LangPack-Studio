@@ -59,9 +59,9 @@ const Header: React.FC<HeaderProps> = ({
             LangPack Studio
           </Typography>
           
-          <Tooltip title="Version 1.0.0">
+          <Tooltip title="Version 1.0.1-dev">
             <Chip
-              label="v1.0.0"
+              label="v1.0.1-dev"
               size="small"
               variant="outlined"
               sx={{
