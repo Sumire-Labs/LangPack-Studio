@@ -7,13 +7,13 @@ export interface MinecraftVersion {
 
 export const MINECRAFT_VERSIONS: MinecraftVersion[] = [
   // 1.21系（最新）
-  { version: '1.21.4', packFormat: 61, displayName: 'Minecraft 1.21.4 (最新)', isRecommended: true },
-  { version: '1.21.2-1.21.3', packFormat: 57, displayName: 'Minecraft 1.21.2-1.21.3' },
-  { version: '1.21.0-1.21.1', packFormat: 48, displayName: 'Minecraft 1.21.0-1.21.1' },
+  { version: '1.21.4', packFormat: 46, displayName: 'Minecraft 1.21.4 (最新)', isRecommended: true },
+  { version: '1.21.2-1.21.3', packFormat: 42, displayName: 'Minecraft 1.21.2-1.21.3' },
+  { version: '1.21.0-1.21.1', packFormat: 34, displayName: 'Minecraft 1.21.0-1.21.1' },
   
   // 1.20系
   { version: '1.20.5-1.20.6', packFormat: 32, displayName: 'Minecraft 1.20.5-1.20.6' },
-  { version: '1.20.3-1.20.4', packFormat: 26, displayName: 'Minecraft 1.20.3-1.20.4' },
+  { version: '1.20.3-1.20.4', packFormat: 22, displayName: 'Minecraft 1.20.3-1.20.4' },
   { version: '1.20.2', packFormat: 18, displayName: 'Minecraft 1.20.2' },
   { version: '1.20.0-1.20.1', packFormat: 15, displayName: 'Minecraft 1.20.0-1.20.1' },
   
