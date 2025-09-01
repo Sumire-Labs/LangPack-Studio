@@ -80,11 +80,51 @@ const ImportView: React.FC<ImportViewProps> = ({
   })
 
   const handleSelectFiles = async () => {
-    if (window.electronAPI?.selectFiles) {
-      const selectedFiles = await window.electronAPI.selectFiles()
-      if (selectedFiles && selectedFiles.length > 0) {
-        onFilesSelected(selectedFiles)
+    try {
+      console.log('ElectronAPI available:', !!window.electronAPI)
+      console.log('selectFiles function available:', !!window.electronAPI?.selectFiles)
+      
+      if (window.electronAPI?.selectFiles) {
+        // Electron環境での処理
+        console.log('Using Electron file selection')
+        const selectedFiles = await window.electronAPI.selectFiles()
+        console.log('Selected files:', selectedFiles)
+        if (selectedFiles && selectedFiles.length > 0) {
+          onFilesSelected(selectedFiles)
+        }
+      } else {
+        // ブラウザ環境でのフォールバック処理
+        console.log('Using browser file selection fallback')
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.multiple = true
+        input.accept = '.json,.lang'
+        
+        input.onchange = async (e) => {
+          const target = e.target as HTMLInputElement
+          if (target.files) {
+            const files = Array.from(target.files)
+            const fileContents = await Promise.all(
+              files.map(async (file) => {
+                const content = await file.text()
+                const fileType = file.name.endsWith('.json') ? 'json' : 'lang'
+                
+                return {
+                  path: file.name,
+                  name: file.name,
+                  content,
+                  type: fileType
+                }
+              })
+            )
+            onFilesSelected(fileContents)
+          }
+        }
+        
+        input.click()
       }
+    } catch (error) {
+      console.error('Error selecting files:', error)
     }
   }
 

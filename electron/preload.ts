@@ -12,8 +12,30 @@ export interface ElectronAPI {
 }
 
 const electronAPI: ElectronAPI = {
-  selectFiles: () => ipcRenderer.invoke('select-files'),
-  saveResourcePack: (data: Buffer) => ipcRenderer.invoke('save-resource-pack', data)
+  selectFiles: async () => {
+    try {
+      console.log('Preload: selectFiles called')
+      const result = await ipcRenderer.invoke('select-files')
+      console.log('Preload: selectFiles result:', result)
+      return result
+    } catch (error) {
+      console.error('Preload: selectFiles error:', error)
+      return []
+    }
+  },
+  saveResourcePack: async (data: Buffer) => {
+    try {
+      console.log('Preload: saveResourcePack called')
+      const result = await ipcRenderer.invoke('save-resource-pack', data)
+      console.log('Preload: saveResourcePack result:', result)
+      return result
+    } catch (error) {
+      console.error('Preload: saveResourcePack error:', error)
+      return null
+    }
+  }
 }
 
+console.log('Preload: Exposing electronAPI to main world')
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
+console.log('Preload: electronAPI exposed successfully')

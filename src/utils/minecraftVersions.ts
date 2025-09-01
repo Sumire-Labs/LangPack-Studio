@@ -7,7 +7,11 @@ export interface MinecraftVersion {
 
 export const MINECRAFT_VERSIONS: MinecraftVersion[] = [
   // 1.21系（最新）
-  { version: '1.21.4', packFormat: 46, displayName: 'Minecraft 1.21.4 (最新)', isRecommended: true },
+  { version: '1.21.9-snapshot', packFormat: 65, displayName: 'Minecraft 1.21.9 Snapshot (25w31a-32a/The Copper Age)', isRecommended: false },
+  { version: '1.21.7-1.21.8', packFormat: 64, displayName: 'Minecraft 1.21.7-1.21.8 (最新安定版)', isRecommended: true },
+  { version: '1.21.6', packFormat: 63, displayName: 'Minecraft 1.21.6' },
+  { version: '1.21.5', packFormat: 55, displayName: 'Minecraft 1.21.5' },
+  { version: '1.21.4', packFormat: 46, displayName: 'Minecraft 1.21.4' },
   { version: '1.21.2-1.21.3', packFormat: 42, displayName: 'Minecraft 1.21.2-1.21.3' },
   { version: '1.21.0-1.21.1', packFormat: 34, displayName: 'Minecraft 1.21.0-1.21.1' },
   
@@ -42,8 +46,33 @@ export const MINECRAFT_VERSIONS: MinecraftVersion[] = [
   // 1.13系
   { version: '1.13.0-1.13.2', packFormat: 4, displayName: 'Minecraft 1.13.0-1.13.2' },
   
-  // レガシー（.lang形式）
-  { version: '1.12.2以前', packFormat: 3, displayName: 'Minecraft 1.12.2以前 (レガシー)' },
+  // 1.12系（人気バージョン）
+  { version: '1.12.2', packFormat: 3, displayName: 'Minecraft 1.12.2 (人気Mod対応)' },
+  { version: '1.12.0-1.12.1', packFormat: 3, displayName: 'Minecraft 1.12.0-1.12.1' },
+  
+  // 1.11系
+  { version: '1.11.2', packFormat: 3, displayName: 'Minecraft 1.11.2' },
+  { version: '1.11.0-1.11.1', packFormat: 3, displayName: 'Minecraft 1.11.0-1.11.1' },
+  
+  // 1.10系
+  { version: '1.10.2', packFormat: 2, displayName: 'Minecraft 1.10.2 (Mod対応)' },
+  { version: '1.10.0-1.10.1', packFormat: 2, displayName: 'Minecraft 1.10.0-1.10.1' },
+  
+  // 1.9系
+  { version: '1.9.4', packFormat: 2, displayName: 'Minecraft 1.9.4' },
+  { version: '1.9.0-1.9.3', packFormat: 2, displayName: 'Minecraft 1.9.0-1.9.3' },
+  
+  // 1.8系（PvP人気）
+  { version: '1.8.9', packFormat: 1, displayName: 'Minecraft 1.8.9 (PvP人気)' },
+  { version: '1.8.0-1.8.8', packFormat: 1, displayName: 'Minecraft 1.8.0-1.8.8' },
+  
+  // 1.7系（黄金期）
+  { version: '1.7.10', packFormat: 1, displayName: 'Minecraft 1.7.10 (Mod黄金期)' },
+  { version: '1.7.2-1.7.9', packFormat: 1, displayName: 'Minecraft 1.7.2-1.7.9' },
+  
+  // 1.6系（馬アップデート）
+  { version: '1.6.4', packFormat: 1, displayName: 'Minecraft 1.6.4' },
+  { version: '1.6.1-1.6.2', packFormat: 1, displayName: 'Minecraft 1.6.1-1.6.2' },
 ]
 
 export const getVersionByPackFormat = (packFormat: number): MinecraftVersion | undefined => {

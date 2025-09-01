@@ -65,44 +65,64 @@ app.on('window-all-closed', () => {
 })
 
 ipcMain.handle('select-files', async () => {
-  const result = await dialog.showOpenDialog(mainWindow!, {
-    properties: ['openFile', 'multiSelections'],
-    filters: [
-      { name: 'Language Files', extensions: ['json', 'lang'] },
-      { name: 'All Files', extensions: ['*'] }
-    ]
-  })
-  
-  if (!result.canceled) {
-    const fileContents = await Promise.all(
-      result.filePaths.map(async (filePath) => {
-        const content = await fs.readFile(filePath, 'utf-8')
-        return {
-          path: filePath,
-          name: path.basename(filePath),
-          content
-        }
-      })
-    )
-    return fileContents
+  if (!mainWindow) {
+    console.error('Main window is not available')
+    return []
   }
-  
-  return []
+
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Language Files', extensions: ['json', 'lang'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    })
+    
+    if (!result.canceled) {
+      const fileContents = await Promise.all(
+        result.filePaths.map(async (filePath) => {
+          const content = await fs.readFile(filePath, 'utf-8')
+          return {
+            path: filePath,
+            name: path.basename(filePath),
+            content
+          }
+        })
+      )
+      return fileContents
+    }
+    
+    return []
+  } catch (error) {
+    console.error('Error opening file dialog:', error)
+    return []
+  }
 })
 
 ipcMain.handle('save-resource-pack', async (_, resourcePackData: any) => {
-  const result = await dialog.showSaveDialog(mainWindow!, {
-    defaultPath: 'resource-pack.zip',
-    filters: [
-      { name: 'ZIP Files', extensions: ['zip'] },
-      { name: 'All Files', extensions: ['*'] }
-    ]
-  })
-  
-  if (!result.canceled && result.filePath) {
-    await fs.writeFile(result.filePath, resourcePackData)
-    return result.filePath
+  if (!mainWindow) {
+    console.error('Main window is not available')
+    return null
   }
-  
-  return null
+
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: 'resource-pack.zip',
+      filters: [
+        { name: 'ZIP Files', extensions: ['zip'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    })
+    
+    if (!result.canceled && result.filePath) {
+      await fs.writeFile(result.filePath, resourcePackData)
+      return result.filePath
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error saving resource pack:', error)
+    return null
+  }
 })
