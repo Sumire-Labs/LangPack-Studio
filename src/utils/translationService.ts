@@ -35,7 +35,6 @@ export interface BatchTranslationResult {
 // 無料のGoogle Translate API (非公式、制限あり)
 class GoogleTranslateService {
   private baseUrl = 'https://translate.googleapis.com/translate_a/single'
-  private requestQueue: Promise<any>[] = []
   private lastRequestTime = 0
   private minDelay = 100 // 100ms between requests to avoid rate limiting
   private parallelProcessor = new ParallelTranslationProcessor(3, 200) // 最大3並列、200ms間隔
@@ -500,14 +499,12 @@ class TranslationManager {
   private libreTranslateService = new LibreTranslateService()
   private geminiService: GeminiTranslateService | null = null
   private currentService: TranslationService = 'google'
-  private geminiApiKey: string = ''
 
   setService(service: TranslationService) {
     this.currentService = service
   }
 
   setGeminiApiKey(apiKey: string) {
-    this.geminiApiKey = apiKey
     this.geminiService = apiKey ? new GeminiTranslateService(apiKey) : null
   }
 
