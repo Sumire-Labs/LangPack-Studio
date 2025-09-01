@@ -1,3 +1,6 @@
+import { translationCache } from './translationCache'
+import { ParallelTranslationProcessor } from './parallelProcessor'
+
 export interface TranslationRequest {
   text: string
   from: string
@@ -10,6 +13,7 @@ export interface TranslationResult {
   from: string
   to: string
   confidence?: number
+  fromCache?: boolean
 }
 
 export interface BatchTranslationRequest {
@@ -20,10 +24,12 @@ export interface BatchTranslationRequest {
 
 export interface BatchTranslationResult {
   success: boolean
-  translations: { key: string; original: string; translated: string; confidence?: number }[]
+  translations: { key: string; original: string; translated: string; confidence?: number; fromCache?: boolean }[]
   failed: { key: string; error: string }[]
   totalProcessed: number
   totalFailed: number
+  cacheHits?: number
+  cacheMisses?: number
 }
 
 // 無料のGoogle Translate API (非公式、制限あり)
@@ -32,6 +38,7 @@ class GoogleTranslateService {
   private requestQueue: Promise<any>[] = []
   private lastRequestTime = 0
   private minDelay = 100 // 100ms between requests to avoid rate limiting
+  private parallelProcessor = new ParallelTranslationProcessor(3, 200) // 最大3並列、200ms間隔
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -80,14 +87,30 @@ class GoogleTranslateService {
   }
 
   async translate(request: TranslationRequest): Promise<TranslationResult> {
+    // キャッシュチェック
+    const cached = translationCache.get(request.text, request.from, request.to, 'google')
+    if (cached) {
+      return {
+        originalText: request.text,
+        translatedText: cached,
+        from: request.from,
+        to: request.to,
+        fromCache: true
+      }
+    }
+
     try {
       const translatedText = await this.makeRequest(request.text, request.from, request.to)
+      
+      // キャッシュに保存
+      translationCache.set(request.text, translatedText, request.from, request.to, 'google')
       
       return {
         originalText: request.text,
         translatedText,
         from: request.from,
-        to: request.to
+        to: request.to,
+        fromCache: false
       }
     } catch (error) {
       throw new Error(`Translation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -95,47 +118,47 @@ class GoogleTranslateService {
   }
 
   async batchTranslate(request: BatchTranslationRequest, onProgress?: (progress: number) => void): Promise<BatchTranslationResult> {
+    console.log(`[Google] Starting batch translation of ${request.entries.length} entries`)
+    
+    // 並列翻訳を実行
+    const translationResults = await this.parallelProcessor.translateSmartBatch(
+      request.entries.map(entry => ({ text: entry.text, key: entry.key })),
+      (text: string) => this.makeRequest(text, request.from, request.to),
+      onProgress
+    )
+
     const result: BatchTranslationResult = {
-      success: false,
+      success: true,
       translations: [],
       failed: [],
       totalProcessed: 0,
       totalFailed: 0
     }
 
-    const total = request.entries.length
-    
-    for (let i = 0; i < request.entries.length; i++) {
-      const entry = request.entries[i]
-      
-      try {
-        const translationResult = await this.translate({
-          text: entry.text,
-          from: request.from,
-          to: request.to
-        })
-
+    // 結果を変換
+    for (const entry of request.entries) {
+      const translated = translationResults.get(entry.key)
+      if (translated && translated !== entry.text) {
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translationResult.translatedText,
-          confidence: translationResult.confidence
+          translated,
+          fromCache: false
         })
         result.totalProcessed++
-      } catch (error) {
+      } else {
         result.failed.push({
           key: entry.key,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: 'Translation failed or returned original text'
         })
         result.totalFailed++
       }
-
-      // Report progress
-      const progress = ((i + 1) / total) * 100
-      onProgress?.(progress)
     }
 
-    result.success = result.totalFailed < total
+    const stats = this.parallelProcessor.getStats()
+    console.log(`[Google] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
+
+    result.success = result.totalFailed < request.entries.length / 2 // 半数以上成功すれば成功とみなす
     return result
   }
 }
@@ -144,6 +167,7 @@ class GoogleTranslateService {
 class GeminiTranslateService {
   private apiKey: string
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+  private parallelProcessor = new ParallelTranslationProcessor(2, 1000) // 最大2並列、1秒間隔（Geminiは制限厳しい）
 
   constructor(apiKey: string) {
     this.apiKey = apiKey
@@ -187,6 +211,19 @@ Translation:`
   }
 
   async translate(request: TranslationRequest): Promise<TranslationResult> {
+    // キャッシュチェック
+    const cached = translationCache.get(request.text, request.from, request.to, 'gemini')
+    if (cached) {
+      return {
+        originalText: request.text,
+        translatedText: cached,
+        from: request.from,
+        to: request.to,
+        confidence: 0.9,
+        fromCache: true
+      }
+    }
+
     try {
       const prompt = this.createTranslationPrompt(request.text, request.from, request.to)
       
@@ -223,12 +260,16 @@ Translation:`
       translatedText = translatedText.replace(/^Translation:\s*/i, '')
       translatedText = translatedText.replace(/^["']|["']$/g, '') // Remove quotes if present
       
+      // キャッシュに保存
+      translationCache.set(request.text, translatedText || request.text, request.from, request.to, 'gemini')
+      
       return {
         originalText: request.text,
         translatedText: translatedText || request.text,
         from: request.from,
         to: request.to,
-        confidence: 0.9 // Gemini typically provides high quality translations
+        confidence: 0.9, // Gemini typically provides high quality translations
+        fromCache: false
       }
     } catch (error) {
       throw new Error(`Gemini translation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -236,51 +277,83 @@ Translation:`
   }
 
   async batchTranslate(request: BatchTranslationRequest, onProgress?: (progress: number) => void): Promise<BatchTranslationResult> {
+    console.log(`[Gemini] Starting batch translation of ${request.entries.length} entries`)
+    
+    // Gemini用の翻訳関数を定義
+    const geminiTranslator = async (text: string): Promise<string> => {
+      const prompt = this.createTranslationPrompt(text, request.from, request.to)
+      
+      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1000,
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`)
+      }
+
+      const data = await response.json()
+      if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid Gemini API response format')
+      }
+
+      let translatedText = data.candidates[0].content.parts[0].text.trim()
+      translatedText = translatedText.replace(/^Translation:\\s*/i, '')
+      translatedText = translatedText.replace(/^[\"']|[\"']$/g, '')
+      
+      return translatedText || text
+    }
+
+    // 並列翻訳を実行
+    const translationResults = await this.parallelProcessor.translateSmartBatch(
+      request.entries.map(entry => ({ text: entry.text, key: entry.key })),
+      geminiTranslator,
+      onProgress
+    )
+
     const result: BatchTranslationResult = {
-      success: false,
+      success: true,
       translations: [],
       failed: [],
       totalProcessed: 0,
       totalFailed: 0
     }
 
-    const total = request.entries.length
-    
-    for (let i = 0; i < request.entries.length; i++) {
-      const entry = request.entries[i]
-      
-      try {
-        const translationResult = await this.translate({
-          text: entry.text,
-          from: request.from,
-          to: request.to
-        })
-
+    // 結果を変換
+    for (const entry of request.entries) {
+      const translated = translationResults.get(entry.key)
+      if (translated && translated !== entry.text) {
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translationResult.translatedText,
-          confidence: translationResult.confidence
+          translated,
+          confidence: 0.9,
+          fromCache: false
         })
         result.totalProcessed++
-      } catch (error) {
+      } else {
         result.failed.push({
           key: entry.key,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: 'Translation failed or returned original text'
         })
         result.totalFailed++
       }
-
-      const progress = ((i + 1) / total) * 100
-      onProgress?.(progress)
-
-      // Add delay to respect rate limits (Gemini allows 60 requests per minute)
-      if (i < request.entries.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
     }
 
-    result.success = result.totalFailed < total
+    const stats = this.parallelProcessor.getStats()
+    console.log(`[Gemini] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
+
+    result.success = result.totalFailed < request.entries.length / 2
     return result
   }
 }
@@ -288,6 +361,7 @@ Translation:`
 // Alternative free translation service using LibreTranslate (if available)
 class LibreTranslateService {
   private baseUrl: string
+  private parallelProcessor = new ParallelTranslationProcessor(2, 500) // 最大2並列、500ms間隔
 
   constructor(apiUrl = 'https://libretranslate.de/translate') {
     this.baseUrl = apiUrl
@@ -326,50 +400,70 @@ class LibreTranslateService {
   }
 
   async batchTranslate(request: BatchTranslationRequest, onProgress?: (progress: number) => void): Promise<BatchTranslationResult> {
+    console.log(`[LibreTranslate] Starting batch translation of ${request.entries.length} entries`)
+    
+    // LibreTranslate用の翻訳関数を定義
+    const libreTranslator = async (text: string): Promise<string> => {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: text,
+          source: request.from,
+          target: request.to,
+          format: 'text'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`LibreTranslate request failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.translatedText || text
+    }
+
+    // 並列翻訳を実行
+    const translationResults = await this.parallelProcessor.translateSmartBatch(
+      request.entries.map(entry => ({ text: entry.text, key: entry.key })),
+      libreTranslator,
+      onProgress
+    )
+
     const result: BatchTranslationResult = {
-      success: false,
+      success: true,
       translations: [],
       failed: [],
       totalProcessed: 0,
       totalFailed: 0
     }
 
-    const total = request.entries.length
-    
-    for (let i = 0; i < request.entries.length; i++) {
-      const entry = request.entries[i]
-      
-      try {
-        const translationResult = await this.translate({
-          text: entry.text,
-          from: request.from,
-          to: request.to
-        })
-
+    // 結果を変換
+    for (const entry of request.entries) {
+      const translated = translationResults.get(entry.key)
+      if (translated && translated !== entry.text) {
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translationResult.translatedText
+          translated,
+          fromCache: false
         })
         result.totalProcessed++
-      } catch (error) {
+      } else {
         result.failed.push({
           key: entry.key,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: 'Translation failed or returned original text'
         })
         result.totalFailed++
       }
-
-      const progress = ((i + 1) / total) * 100
-      onProgress?.(progress)
-
-      // Add delay to avoid rate limiting
-      if (i < request.entries.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
     }
 
-    result.success = result.totalFailed < total
+    const stats = this.parallelProcessor.getStats()
+    console.log(`[LibreTranslate] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
+
+    result.success = result.totalFailed < request.entries.length / 2
     return result
   }
 }
