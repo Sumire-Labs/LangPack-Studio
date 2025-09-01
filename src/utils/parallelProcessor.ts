@@ -23,6 +23,13 @@ export class PromisePool {
   ) {}
 
   /**
+   * レート制限値を取得
+   */
+  getRateLimitMs(): number {
+    return this.rateLimitMs
+  }
+
+  /**
    * タスクを追加して実行
    */
   async add<T>(fn: () => Promise<T>, priority: number = 0): Promise<T> {
