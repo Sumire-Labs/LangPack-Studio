@@ -9,8 +9,8 @@
 </div>
 
 <div align="center">
-  <h3>✨ MinecraftのModを簡単に翻訳してリソースパックを作成 ✨</h3>
-  <p>Material Design 3を採用した美しいUIで、複雑な翻訳作業を直感的に行えるデスクトップアプリケーション</p>
+  <h3>MinecraftのModを簡単に翻訳してリソースパックを作成</h3>
+  <p>複雑な翻訳作業を直感的に行えるWebアプリケーション</p>
 </div>
 
 ---
@@ -25,90 +25,41 @@
 
 ### 🌐 **多言語翻訳システム**
 - **6つの翻訳API対応**:
-  - 🔵 **Google Translate** (無料・有料)
-  - 🟢 **DeepL** (高品質翻訳)
-  - 🔷 **Azure Translator** (企業向け)
-  - 🤖 **OpenAI GPT** (AI翻訳)
-  - ✨ **Google Gemini** (AI翻訳・新登場)
-  - 🆓 **LibreTranslate** (オープンソース)
+  - **Google Translate** (無料)
+  - **DeepL** (無料)
+  - **Azure Translator** (有料)
+  - **OpenAI GPT** (AI翻訳・有料)
+  - **Google Gemini** (AI翻訳・無料)
+  - **LibreTranslate** (無料)
 - **バッチ翻訳**: 大量のテキストを効率的に処理
 - **翻訳結果編集**: 手動での修正も可能
-- **進行状況表示**: リアルタイムで翻訳進捗を確認
+- **進行状況表示**: 翻訳進捗のバーを表示
 
-### 🎯 **翻訳品質チェック** (NEW!)
+### 🎯 **翻訳品質チェック**
 - **包括的品質分析**: プレースホルダー、フォーマット、一貫性をチェック
-- **スマートスコアリング**: 0-100点での品質評価
 - **詳細レポート**: 問題点と改善提案を表示
 - **フィルタリング機能**: エラー・警告・情報レベルで絞り込み
 - **エクスポート対応**: 品質レポートのJSON出力
 
-### 📊 **翻訳統計・レポート** (NEW!)
+### 📊 **翻訳統計・レポート**
 - **使用状況分析**: サービス別・言語ペア別の利用統計
 - **コスト計算**: 各翻訳APIの推定コストを自動算出
 - **パフォーマンス追跡**: 翻訳セッションの履歴と品質スコア
 - **レコメンデーション**: 使用パターンに基づく改善提案
 - **データエクスポート**: CSV・JSON形式での統計出力
 
-### 🔌 **API統合** (NEW!)
+### 🔌 **API統合**
 - **RESTful API**: 外部ツールとの連携を可能に
 - **認証システム**: API キーによるセキュアなアクセス
 - **完全ドキュメント**: 使用例付きのAPI仕様書
 - **リクエストログ**: API使用履歴の追跡
 - **ヘルスチェック**: システム状態の監視
 
-### 📦 **Minecraft互換リソースパック生成**
+### 📦 **Minecraftリソースパック生成**
 - **完全準拠**: pack.mcmetaの自動生成
 - **バージョン対応**: 各Minecraftバージョンに最適化
 - **ワンクリック出力**: ZIPファイルで即使用可能
 - **プレビュー機能**: 生成前に内容を確認
-
-### 🎨 **モダンUI/UX**
-- **Material Design 3**: Googleの最新デザインガイドライン
-- **ダークモード**: 目に優しい暗いテーマ
-- **レスポンシブ**: あらゆる画面サイズに対応
-- **ステップバイステップ**: 分かりやすいワークフロー
-- **アニメーション**: スムーズで美しいトランジション
-
-## 📸 スクリーンショット
-
-<div align="center">
-
-### ウェルカム画面
-*美しいグラデーションと共に始まる翻訳の旅*
-
-### ファイルインポート
-*ドラッグ&ドロップで簡単にファイルを読み込み*
-
-### 翻訳パネル
-*5つの翻訳APIから最適なものを選択*
-
-### プレビュー&確認
-*翻訳結果を詳細に確認・編集*
-
-### リソースパック生成
-*ワンクリックでMinecraft用パックを作成*
-
-</div>
-
-## 🏃‍♂️ クイックスタート
-
-### ダウンロード
-```bash
-# 最新リリースをダウンロード
-https://github.com/Sumire-Labs/LangPack-Studio/releases
-```
-
-### 基本的な使い方
-1. **📁 ファイルインポート**: 言語ファイルをドラッグ&ドロップ
-2. **👁️ プレビュー**: 読み込まれた内容を確認
-3. **🌐 翻訳**: お好みの翻訳APIを選択して実行
-4. **🎯 品質チェック**: 翻訳品質を自動分析
-5. **📊 統計確認**: コストと使用状況をレポート表示
-6. **📦 生成**: リソースパックを生成してダウンロード
-
-### 対応ファイル形式
-- `*.json` - Minecraft 1.13以降の標準形式
-- `*.lang` - Minecraft 1.12以前の形式
 
 ## 🛠️ 開発者向け
 
@@ -154,18 +105,15 @@ npm run electron:build # Electron配布版ビルド
 
 ## 🌍 翻訳API設定
 
-### 無料オプション
-- **LibreTranslate**: 完全無料、セルフホスト可能
-- **Google Translate**: 制限付き無料利用
+### オプション
 
-### 有料オプション（高品質）
 | サービス | 料金目安 | 特徴 |
 |---------|---------|------|
-| **DeepL** | $6.99/月〜 | 最高品質、ヨーロッパ言語に強い |
-| **Google Translate** | $20/100万文字 | 汎用性が高い、多言語対応 |
-| **Google Gemini** | $0.00025/1Kトークン | 新世代AI、コスパ最高 |
-| **Azure Translator** | $10/100万文字 | 企業向け、高い信頼性 |
-| **OpenAI** | $0.002/1Kトークン | AI翻訳、文脈理解 |
+| **DeepL** | $6.99/月〜 | 高品質 |
+| **Google Translate** | $20/100万文字 | 汎用性が高い |
+| **Google Gemini** | $0.00025/1Kトークン | AI翻訳 |
+| **Azure Translator** | $10/100万文字 | 企業向け |
+| **OpenAI** | $0.002/1Kトークン | AI翻訳 |
 
 詳細な設定方法は[翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide)をご覧ください。
 
@@ -182,87 +130,6 @@ npm run electron:build # Electron配布版ビルド
 | [🔧 トラブルシューティング](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Troubleshooting) | よくある問題と解決方法 |
 | [👨‍💻 開発者ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Developer-Guide) | ビルド方法とコントリビューション |
 
-## 🤝 コントリビューション
-
-LangPack Studioの改善にご協力ください！
-
-### 貢献方法
-1. **🍴 Fork** このリポジトリ
-2. **🌿 Branch** を作成 (`git checkout -b feature/amazing-feature`)
-3. **💾 Commit** 変更 (`git commit -m 'feat: add amazing feature'`)
-4. **🚀 Push** to Branch (`git push origin feature/amazing-feature`)
-5. **📝 Pull Request** を作成
-
-### 開発に参加
-- **🐛 バグ報告**: [Issues](https://github.com/Sumire-Labs/LangPack-Studio/issues)
-- **💡 機能提案**: [Discussions](https://github.com/Sumire-Labs/LangPack-Studio/discussions)
-- **📖 ドキュメント**: [Wiki編集](https://github.com/Sumire-Labs/LangPack-Studio/wiki)
-
-## 🎯 ロードマップ
-
-### v1.1.0 (完了済み)
-- [x] 🎯 翻訳品質チェック機能
-- [x] 📊 翻訳統計・レポート機能
-- [x] 🔌 API統合システム
-- [x] ✨ Google Gemini API対応
-- [x] 📈 コスト計算・追跡システム
-- [x] 📋 品質レポートエクスポート
-
-### v1.2.0-alpha (開発中)
-- [x] 🚀 パフォーマンス最適化 (60-80%高速化)
-- [x] 💾 翻訳キャッシュシステム
-- [x] ⚡ 並列処理・バッチ最適化
-- [x] 📋 レガシーMinecraftバージョン対応 (1.7.10, 1.8.9, 1.12.2)
-- [x] 🆕 最新バージョン対応 (1.21.8, 1.21.9-snapshot)
-- [x] ✨ Gemini 2.0 Flash対応
-- [x] 🔧 ファイル名処理改善
-- [x] 📦 クロスプラットフォーム配布準備
-- [ ] 🎨 カスタムテーマサポート
-- [ ] 🔄 自動バックアップ・復元
-
-### v1.2.0-stable (予定)
-- [ ] 🌏 追加言語サポート (タイ語、ベトナム語など)
-- [ ] 🤖 機械学習による翻訳品質向上
-- [ ] 👥 チーム共有・コラボレーション機能
-
-### v1.3.0 (予定)
-- [ ] 🔌 プラグインシステム
-- [ ] 📱 モバイル版対応
-- [ ] 🌐 ウェブ版リリース
-
-### v2.0.0 (未来)
-- [ ] ☁️ クラウド同期
-- [ ] 🎮 ゲーム内プレビュー
-- [ ] 🎯 AI翻訳エンジン統合
-
-## 📄 ライセンス
+## 💰 License
 
 このプロジェクトは [BSD-3-Clause License](LICENSE.md) の下でライセンスされています。
-
-## 🙏 謝辞
-
-- **Material-UI Team** - 美しいコンポーネントライブラリ
-- **React Team** - 素晴らしいフレームワーク
-- **TypeScript Team** - 型安全な開発環境
-- **Minecraft Community** - インスピレーションとフィードバック
-- **翻訳API提供者** - 多言語対応を可能にするサービス
-
-## 📞 サポート
-
-### 💬 コミュニティ
-- **GitHub Discussions**: 質問・アイデア交換
-- **GitHub Issues**: バグ報告・機能要求
-- **Wiki**: 詳細なドキュメント
-
-### 📈 統計
-![GitHub stars](https://img.shields.io/github/stars/Sumire-Labs/LangPack-Studio)
-![GitHub forks](https://img.shields.io/github/forks/Sumire-Labs/LangPack-Studio)
-![GitHub issues](https://img.shields.io/github/issues/Sumire-Labs/LangPack-Studio)
-![GitHub license](https://img.shields.io/github/license/Sumire-Labs/LangPack-Studio)
-
----
-
-<div align="center">
-  <p>❤️ Made with love by <a href="https://github.com/Sumire-Labs">Sumire Labs</a></p>
-  <p>🌟 あなたの⭐で応援してください！</p>
-</div>
