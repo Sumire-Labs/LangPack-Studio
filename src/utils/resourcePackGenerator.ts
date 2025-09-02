@@ -80,9 +80,22 @@ export class ResourcePackGenerator {
       // Group files by namespace and locale
       const fileGroups = this.groupFilesByNamespaceAndLocale(files, parseResults)
 
+      // Check if we have translations that should replace the original files
+      const hasTranslations = config.includeTranslations && config.includeTranslations.length > 0
+      const translationLocales = hasTranslations 
+        ? new Set(config.includeTranslations!.map(t => t.locale))
+        : new Set<string>()
+
       // Generate language files for each group
       for (const [groupKey, group] of fileGroups.entries()) {
         const { namespace, locale, files: groupFiles, parseResults: groupParseResults } = group
+        
+        // Skip original files if we have translations for the same locale
+        // (translations will be handled separately and will override originals)
+        if (hasTranslations && translationLocales.has(locale)) {
+          result.warnings.push(`Skipping original ${namespace}/${locale} as translations are provided`)
+          continue
+        }
         
         // Merge entries from all files in this group
         const mergedEntries = this.mergeLanguageEntries(groupParseResults)
@@ -131,7 +144,7 @@ export class ResourcePackGenerator {
           // Try to extract namespace from key (format: category.namespace.item)
           const parts = trans.key.split('.')
           const namespace = parts.length >= 3 ? parts[1] : 'minecraft'
-          const locale = trans.locale
+          const locale = trans.locale  // Use the translation's target locale
           
           const groupKey = `${namespace}:${locale}`
           if (!translationGroups.has(groupKey)) {
