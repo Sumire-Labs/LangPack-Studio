@@ -9,6 +9,7 @@ export interface ResourcePackOptions {
   packFormat: number
   supportedFormats?: number | number[] | { min_inclusive: number; max_inclusive: number }
   includeTranslations?: { key: string; value: string; locale: string }[]
+  packIcon?: File | Blob
 }
 
 export interface ResourcePackResult {
@@ -18,7 +19,7 @@ export interface ResourcePackResult {
   warnings: string[]
   generatedFiles: {
     path: string
-    type: 'meta' | 'language'
+    type: 'meta' | 'language' | 'icon'
     namespace?: string
     locale?: string
   }[]
@@ -76,6 +77,24 @@ export class ResourcePackGenerator {
         path: 'pack.mcmeta',
         type: 'meta'
       })
+
+      // Add pack icon if provided
+      if (config.packIcon) {
+        try {
+          const iconResult = await this.processPackIcon(config.packIcon)
+          if (iconResult.success && iconResult.imageData) {
+            zip.file('pack.png', iconResult.imageData)
+            result.generatedFiles.push({
+              path: 'pack.png',
+              type: 'icon'
+            })
+          } else if (iconResult.warning) {
+            result.warnings.push(iconResult.warning)
+          }
+        } catch (error) {
+          result.warnings.push(`アイコンの処理に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+      }
 
       // Group files by namespace and locale
       const fileGroups = this.groupFilesByNamespaceAndLocale(files, parseResults)
@@ -402,13 +421,142 @@ export class ResourcePackGenerator {
         if (!file.path.endsWith('.json') && !file.path.endsWith('.lang')) {
           errors.push(`Language file should be JSON or LANG: ${file.path}`)
         }
+      } else if (file.type === 'icon') {
+        if (file.path !== 'pack.png') {
+          errors.push(`Invalid pack icon path: ${file.path}`)
+        }
       }
     })
+
+    // Check for pack icon (informational)
+    const hasPackIcon = generatedFiles.some(f => f.type === 'icon')
+    if (hasPackIcon) {
+      warnings.push('Pack icon added successfully')
+    }
 
     return {
       isValid: errors.length === 0,
       errors,
       warnings
+    }
+  }
+
+  /**
+   * パックアイコン画像を処理する
+   */
+  private static async processPackIcon(iconFile: File | Blob): Promise<{
+    success: boolean
+    imageData?: ArrayBuffer
+    warning?: string
+  }> {
+    try {
+      // ファイル形式をチェック
+      const fileType = iconFile.type || this.getFileTypeFromBlob(iconFile)
+      if (!fileType.startsWith('image/')) {
+        return {
+          success: false,
+          warning: 'アイコンファイルは画像形式である必要があります'
+        }
+      }
+
+      // サイズをチェック（Minecraftでは推奨サイズは128x128だが、様々なサイズに対応）
+      const maxSize = 5 * 1024 * 1024 // 5MB制限
+      if (iconFile.size > maxSize) {
+        return {
+          success: false,
+          warning: 'アイコンファイルは5MB以下である必要があります'
+        }
+      }
+
+      // 画像をCanvasで処理して最適化
+      const optimizedImage = await this.optimizePackIcon(iconFile)
+      
+      if (optimizedImage) {
+        return {
+          success: true,
+          imageData: optimizedImage
+        }
+      } else {
+        // 最適化に失敗した場合、元の画像をそのまま使用
+        const arrayBuffer = await iconFile.arrayBuffer()
+        return {
+          success: true,
+          imageData: arrayBuffer,
+          warning: '画像の最適化に失敗しましたが、元の画像を使用します'
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        warning: `画像の処理中にエラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
+    }
+  }
+
+  /**
+   * Blobからファイルタイプを推測
+   */
+  private static getFileTypeFromBlob(blob: Blob): string {
+    if (blob instanceof File) {
+      return blob.type
+    }
+    // Blobの場合、拡張子から推測（簡易的）
+    return 'image/png' // デフォルト
+  }
+
+  /**
+   * パックアイコンを最適化（推奨サイズ128x128にリサイズ）
+   */
+  private static async optimizePackIcon(imageFile: File | Blob): Promise<ArrayBuffer | null> {
+    try {
+      return new Promise((resolve) => {
+        const img = new Image()
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+
+        if (!ctx) {
+          resolve(null)
+          return
+        }
+
+        img.onload = () => {
+          // Minecraftの推奨サイズ128x128にリサイズ
+          const targetSize = 128
+          canvas.width = targetSize
+          canvas.height = targetSize
+
+          // アスペクト比を維持してリサイズ
+          const scale = Math.min(targetSize / img.width, targetSize / img.height)
+          const scaledWidth = img.width * scale
+          const scaledHeight = img.height * scale
+          const offsetX = (targetSize - scaledWidth) / 2
+          const offsetY = (targetSize - scaledHeight) / 2
+
+          // 背景を透明にクリア
+          ctx.clearRect(0, 0, targetSize, targetSize)
+          
+          // 画像を描画
+          ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight)
+
+          // PNGとして出力
+          canvas.toBlob((blob) => {
+            if (blob) {
+              blob.arrayBuffer().then(resolve).catch(() => resolve(null))
+            } else {
+              resolve(null)
+            }
+          }, 'image/png', 0.9)
+        }
+
+        img.onerror = () => resolve(null)
+
+        // 画像を読み込み
+        const url = URL.createObjectURL(imageFile)
+        img.src = url
+      })
+    } catch (error) {
+      console.error('Image optimization failed:', error)
+      return null
     }
   }
 }
