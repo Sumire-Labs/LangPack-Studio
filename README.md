@@ -104,33 +104,6 @@ npm run electron:build # Electron配布版ビルド
 - **Statistics**: localStorage + 統計分析システム
 - **API Server**: Express.js風のルーティングシステム
 
-## 🌍 翻訳API設定
-
-### オプション
-
-| サービス | 料金目安 | 特徴 |
-|---------|---------|------|
-| **DeepL** | $6.99/月〜 | 高品質 |
-| **Google Translate** | $20/100万文字 | 汎用性が高い |
-| **Google Gemini** | $0.00025/1Kトークン | AI翻訳 |
-| **Azure Translator** | $10/100万文字 | 企業向け |
-| **OpenAI** | $0.002/1Kトークン | AI翻訳 |
-
-詳細な設定方法は[翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide)をご覧ください。
-
-## 📚 ドキュメント
-
-| 📖 ガイド | 📝 内容 |
-|----------|--------|
-| [🏠 Home](https://github.com/Sumire-Labs/LangPack-Studio/wiki) | プロジェクト概要・クイックスタート |
-| [📖 使い方ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/User-Guide) | 詳細な操作手順 |
-| [🌐 翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide) | API設定と翻訳オプション |
-| [🎯 品質チェックガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Quality-Check-Guide) | 翻訳品質分析の使い方 |
-| [📊 統計・レポートガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Statistics-Guide) | 使用統計とコスト分析 |
-| [🔌 API統合ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/API-Guide) | 外部連携とAPI仕様 |
-| [🔧 トラブルシューティング](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Troubleshooting) | よくある問題と解決方法 |
-| [👨‍💻 開発者ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Developer-Guide) | ビルド方法とコントリビューション |
-
 ## 💰 License
 
 このプロジェクトは [BSD-3-Clause License](LICENSE.md) の下でライセンスされています。
