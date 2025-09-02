@@ -285,7 +285,9 @@ export class ResourcePackGenerator {
         // Use Electron's save dialog
         const buffer = await blob.arrayBuffer()
         const uint8Array = new Uint8Array(buffer)
-        const savedPath = await window.electronAPI.saveResourcePack(Buffer.from(uint8Array))
+        // .zipを除いたファイル名をElectronに渡す
+        const baseFileName = filename.replace(/\.zip$/i, '')
+        const savedPath = await window.electronAPI.saveResourcePack(Buffer.from(uint8Array), baseFileName)
         return savedPath !== null
       } else {
         // Fallback: use browser download

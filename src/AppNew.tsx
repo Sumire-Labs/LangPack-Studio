@@ -295,7 +295,9 @@ function AppNew() {
       })
     }
     
-    const { success, result, saved } = await generateAndSave(allFiles, options)
+    // packNameを使用してファイル名を生成
+    const fileName = options.packName || 'resource-pack'
+    const { success, result, saved } = await generateAndSave(allFiles, options, fileName)
     
     if (success && saved) {
       showNotification('リソースパックを生成・保存しました', 'success')

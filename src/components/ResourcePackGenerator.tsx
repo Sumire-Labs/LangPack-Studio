@@ -70,7 +70,7 @@ const ResourcePackGenerator: React.FC<ResourcePackGeneratorProps> = ({
         includeTranslations: translatedEntries.length > 0 ? translatedEntries : undefined
       }
 
-      const { success, result, saved } = await generateAndSave(files, options)
+      const { success, result, saved } = await generateAndSave(files, options, packName)
       
       if (success && saved) {
         onComplete?.(true, `リソースパック "${packName}" を正常に生成・保存しました`)

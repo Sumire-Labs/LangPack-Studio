@@ -8,7 +8,7 @@ export interface LanguageFile {
 
 export interface ElectronAPI {
   selectFiles: () => Promise<LanguageFile[]>
-  saveResourcePack: (data: Buffer) => Promise<string | null>
+  saveResourcePack: (data: Buffer, fileName?: string) => Promise<string | null>
 }
 
 const electronAPI: ElectronAPI = {
@@ -23,10 +23,10 @@ const electronAPI: ElectronAPI = {
       return []
     }
   },
-  saveResourcePack: async (data: Buffer) => {
+  saveResourcePack: async (data: Buffer, fileName?: string) => {
     try {
-      console.log('Preload: saveResourcePack called')
-      const result = await ipcRenderer.invoke('save-resource-pack', data)
+      console.log('Preload: saveResourcePack called with fileName:', fileName)
+      const result = await ipcRenderer.invoke('save-resource-pack', data, fileName)
       console.log('Preload: saveResourcePack result:', result)
       return result
     } catch (error) {

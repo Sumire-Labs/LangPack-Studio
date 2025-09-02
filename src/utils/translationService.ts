@@ -165,11 +165,80 @@ class GoogleTranslateService {
 // Google Gemini AI translation service
 class GeminiTranslateService {
   private apiKey: string
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
-  private parallelProcessor = new ParallelTranslationProcessor(2, 1000) // 最大2並列、1秒間隔（Geminiは制限厳しい）
+  private modelName: string
+  private parallelProcessor = new ParallelTranslationProcessor(3, 500) // Gemini 2.0は高速・高制限
 
-  constructor(apiKey: string) {
+  // 使用可能なGeminiモデル
+  private static readonly AVAILABLE_MODELS = {
+    'gemini-2.0-flash': 'Gemini 2.0 Flash (最新・推奨)',
+    'gemini-2.0-flash-lite': 'Gemini 2.0 Flash-Lite (高速・低コスト)',
+    'gemini-2.0-flash-001': 'Gemini 2.0 Flash (安定版)',
+    'gemini-2.0-flash-lite-001': 'Gemini 2.0 Flash-Lite (安定版)',
+    'gemini-1.5-flash-latest': 'Gemini 1.5 Flash (レガシー)',
+    'gemini-1.5-pro-latest': 'Gemini 1.5 Pro (レガシー)'
+  }
+
+  constructor(apiKey: string, modelName: string = 'gemini-2.0-flash') {
     this.apiKey = apiKey
+    this.modelName = modelName
+    
+    // APIキーの形式をチェック
+    if (!apiKey) {
+      console.warn('[Gemini] API key is empty')
+    } else if (!apiKey.startsWith('AIza')) {
+      console.warn('[Gemini] API key format may be incorrect (should start with AIza)')
+    } else {
+      console.log('[Gemini] API key format looks correct')
+    }
+    
+    // 使用モデルをログ出力
+    const modelDescription = GeminiTranslateService.AVAILABLE_MODELS[modelName as keyof typeof GeminiTranslateService.AVAILABLE_MODELS]
+    console.log(`[Gemini] Using model: ${modelName} (${modelDescription || 'Unknown model'})`)
+  }
+
+  /**
+   * 使用可能なモデル一覧を取得
+   */
+  static getAvailableModels() {
+    return GeminiTranslateService.AVAILABLE_MODELS
+  }
+
+  /**
+   * モデルを変更
+   */
+  setModel(modelName: string) {
+    if (modelName in GeminiTranslateService.AVAILABLE_MODELS) {
+      this.modelName = modelName
+      console.log(`[Gemini] Model changed to: ${modelName}`)
+    } else {
+      console.warn(`[Gemini] Unknown model: ${modelName}`)
+    }
+  }
+
+  /**
+   * 現在のAPIエンドポイントを取得
+   */
+  private getApiUrl(): string {
+    return `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent`
+  }
+
+  /**
+   * APIキーと接続をテスト
+   */
+  async testConnection(): Promise<boolean> {
+    try {
+      console.log('[Gemini] Testing API connection...')
+      const testResult = await this.translate({
+        text: 'Hello',
+        from: 'en',
+        to: 'ja'
+      })
+      console.log('[Gemini] Connection test successful:', testResult.translatedText)
+      return true
+    } catch (error) {
+      console.error('[Gemini] Connection test failed:', error)
+      return false
+    }
   }
 
   private createTranslationPrompt(text: string, from: string, to: string): string {
@@ -226,34 +295,59 @@ Translation:`
     try {
       const prompt = this.createTranslationPrompt(request.text, request.from, request.to)
       
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+      console.log('[Gemini Debug] API Key length:', this.apiKey ? this.apiKey.length : 'Not set')
+      const apiUrl = this.getApiUrl()
+      console.log('[Gemini Debug] Request URL:', `${apiUrl}?key=${this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'NOT_SET'}`)
+      console.log('[Gemini Debug] Text to translate:', request.text.substring(0, 50) + '...')
+      console.log('[Gemini Debug] Using model:', this.modelName)
+      
+      const requestBody = {
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2000, // Gemini 2.0は最大8192まで対応
+          topP: 0.8,
+          topK: 40
+        }
+      }
+      
+      console.log('[Gemini Debug] Request body:', JSON.stringify(requestBody, null, 2))
+      
+      const response = await fetch(`${apiUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 1000,
-          }
-        })
+        body: JSON.stringify(requestBody)
       })
 
+      console.log('[Gemini Debug] Response status:', response.status)
+      console.log('[Gemini Debug] Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`)
+        const errorText = await response.text()
+        console.error('[Gemini Debug] Error response body:', errorText)
+        let errorData = {}
+        try {
+          errorData = JSON.parse(errorText)
+        } catch (e) {
+          console.error('[Gemini Debug] Could not parse error as JSON')
+        }
+        throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || errorText || 'Unknown error'}`)
       }
 
       const data = await response.json()
+      console.log('[Gemini Debug] Response data:', JSON.stringify(data, null, 2))
       
       if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        console.error('[Gemini Debug] Invalid response structure:', data)
         throw new Error('Invalid Gemini API response format')
       }
 
       let translatedText = data.candidates[0].content.parts[0].text.trim()
+      console.log('[Gemini Debug] Raw translated text:', translatedText)
       
       // Clean up the response - remove any extra formatting or explanations
       translatedText = translatedText.replace(/^Translation:\s*/i, '')
@@ -281,8 +375,9 @@ Translation:`
     // Gemini用の翻訳関数を定義
     const geminiTranslator = async (text: string): Promise<string> => {
       const prompt = this.createTranslationPrompt(text, request.from, request.to)
+      const apiUrl = this.getApiUrl()
       
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+      const response = await fetch(`${apiUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -291,7 +386,9 @@ Translation:`
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 1000,
+            maxOutputTokens: 2000, // Gemini 2.0対応
+            topP: 0.8,
+            topK: 40
           }
         })
       })
@@ -504,8 +601,32 @@ class TranslationManager {
     this.currentService = service
   }
 
-  setGeminiApiKey(apiKey: string) {
-    this.geminiService = apiKey ? new GeminiTranslateService(apiKey) : null
+  setGeminiApiKey(apiKey: string, modelName: string = 'gemini-2.0-flash') {
+    this.geminiService = apiKey ? new GeminiTranslateService(apiKey, modelName) : null
+    // APIキー設定後に接続テストを実行
+    if (this.geminiService) {
+      setTimeout(() => {
+        this.geminiService?.testConnection()
+      }, 1000)
+    }
+  }
+
+  /**
+   * Geminiモデルを変更
+   */
+  setGeminiModel(modelName: string) {
+    if (this.geminiService) {
+      this.geminiService.setModel(modelName)
+    } else {
+      console.warn('[TranslationManager] Gemini service not initialized')
+    }
+  }
+
+  /**
+   * 使用可能なGeminiモデル一覧を取得
+   */
+  getAvailableGeminiModels() {
+    return GeminiTranslateService.getAvailableModels()
   }
 
   getCurrentService(): TranslationService {

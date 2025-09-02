@@ -6,7 +6,7 @@ export interface LanguageFile {
 
 export interface ElectronAPI {
   selectFiles: () => Promise<LanguageFile[]>
-  saveResourcePack: (data: Buffer) => Promise<string | null>
+  saveResourcePack: (data: Buffer, fileName?: string) => Promise<string | null>
 }
 
 declare global {

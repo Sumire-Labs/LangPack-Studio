@@ -1,9 +1,6 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron'
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { promises as fs } from 'fs'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import { promises as fs } from 'node:fs'
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -27,7 +24,7 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: true
     },
-    icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
+    icon: process.env.VITE_PUBLIC ? path.join(process.env.VITE_PUBLIC, 'icon.png') : undefined,
     title: 'LangPack Studio',
     show: false
   })
@@ -100,15 +97,23 @@ ipcMain.handle('select-files', async () => {
   }
 })
 
-ipcMain.handle('save-resource-pack', async (_, resourcePackData: any) => {
+ipcMain.handle('save-resource-pack', async (_, resourcePackData: any, fileName?: string) => {
   if (!mainWindow) {
     console.error('Main window is not available')
     return null
   }
 
   try {
+    // packNameが提供されている場合は、それを使用してファイル名を生成
+    let defaultFileName = 'resource-pack.zip'
+    if (fileName) {
+      // ファイル名をサニタイズ（無効な文字を除去）
+      const sanitizedName = fileName.replace(/[<>:"/\\|?*]/g, '-')
+      defaultFileName = `${sanitizedName}.zip`
+    }
+
     const result = await dialog.showSaveDialog(mainWindow, {
-      defaultPath: 'resource-pack.zip',
+      defaultPath: defaultFileName,
       filters: [
         { name: 'ZIP Files', extensions: ['zip'] },
         { name: 'All Files', extensions: ['*'] }
