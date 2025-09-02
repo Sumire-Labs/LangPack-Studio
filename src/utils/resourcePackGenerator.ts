@@ -92,15 +92,27 @@ export class ResourcePackGenerator {
           continue
         }
 
-        // Convert entries to JSON format
-        const languageJson: { [key: string]: string } = {}
-        mergedEntries.forEach(entry => {
-          languageJson[entry.key] = entry.value
-        })
-
-        // Create the file path: assets/{namespace}/lang/{locale}.json
-        const filePath = `assets/${namespace}/lang/${locale}.json`
-        zip.file(filePath, JSON.stringify(languageJson, null, 2))
+        // Determine file format based on pack format
+        const isLegacyFormat = config.packFormat <= 3
+        const fileExtension = isLegacyFormat ? 'lang' : 'json'
+        const filePath = `assets/${namespace}/lang/${locale}.${fileExtension}`
+        
+        let fileContent: string
+        if (isLegacyFormat) {
+          // Convert entries to .lang format (key=value)
+          fileContent = mergedEntries
+            .map(entry => `${entry.key}=${entry.value}`)
+            .join('\n')
+        } else {
+          // Convert entries to JSON format
+          const languageJson: { [key: string]: string } = {}
+          mergedEntries.forEach(entry => {
+            languageJson[entry.key] = entry.value
+          })
+          fileContent = JSON.stringify(languageJson, null, 2)
+        }
+        
+        zip.file(filePath, fileContent)
         
         result.generatedFiles.push({
           path: filePath,
@@ -132,27 +144,67 @@ export class ResourcePackGenerator {
         // Generate files for translation groups
         for (const [groupKey, translations] of translationGroups.entries()) {
           const [namespace, locale] = groupKey.split(':')
-          const filePath = `assets/${namespace}/lang/${locale}.json`
+          const isLegacyFormat = config.packFormat <= 3
+          const fileExtension = isLegacyFormat ? 'lang' : 'json'
+          const filePath = `assets/${namespace}/lang/${locale}.${fileExtension}`
           
           // Check if this file already exists from original files
           const existingFile = result.generatedFiles.find(f => f.path === filePath)
+          let translationContent: string
+          if (isLegacyFormat) {
+            // Generate .lang format content
+            translationContent = Object.entries(translations)
+              .map(([key, value]) => `${key}=${value}`)
+              .join('\n')
+          } else {
+            // Generate JSON format content
+            translationContent = JSON.stringify(translations, null, 2)
+          }
+          
           if (existingFile) {
             // Merge with existing file
             const existingContent = zip.file(filePath)?.async('string')
             if (existingContent) {
               try {
-                const existingJson = JSON.parse(await existingContent)
-                const mergedJson = { ...existingJson, ...translations }
-                zip.file(filePath, JSON.stringify(mergedJson, null, 2))
+                if (isLegacyFormat) {
+                  // Merge .lang format files
+                  const existingLangContent = await existingContent
+                  const existingEntries = new Map<string, string>()
+                  
+                  // Parse existing .lang file
+                  existingLangContent.split('\n').forEach(line => {
+                    const [key, ...valueParts] = line.split('=')
+                    if (key && valueParts.length > 0) {
+                      existingEntries.set(key, valueParts.join('='))
+                    }
+                  })
+                  
+                  // Merge with new translations
+                  Object.entries(translations).forEach(([key, value]) => {
+                    existingEntries.set(key, value)
+                  })
+                  
+                  // Generate merged content
+                  translationContent = Array.from(existingEntries.entries())
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join('\n')
+                } else {
+                  // Merge JSON format files
+                  const existingJson = JSON.parse(await existingContent)
+                  const mergedJson = { ...existingJson, ...translations }
+                  translationContent = JSON.stringify(mergedJson, null, 2)
+                }
+                
+                zip.file(filePath, translationContent)
                 result.warnings.push(`Merged translations into existing file: ${filePath}`)
               } catch (error) {
                 // Create new file if merging fails
-                zip.file(filePath, JSON.stringify(translations, null, 2))
+                zip.file(filePath, translationContent)
               }
             }
           } else {
             // Create new file
-            zip.file(filePath, JSON.stringify(translations, null, 2))
+            zip.file(filePath, translationContent)
             result.generatedFiles.push({
               path: filePath,
               type: 'language',
@@ -287,6 +339,7 @@ export class ResourcePackGenerator {
         const uint8Array = new Uint8Array(buffer)
         // .zipを除いたファイル名をElectronに渡す
         const baseFileName = filename.replace(/\.zip$/i, '')
+        console.log(`Saving resource pack - Original: "${filename}", Base: "${baseFileName}"`)
         const savedPath = await window.electronAPI.saveResourcePack(Buffer.from(uint8Array), baseFileName)
         return savedPath !== null
       } else {
@@ -333,8 +386,8 @@ export class ResourcePackGenerator {
         if (!file.path.startsWith('assets/')) {
           errors.push(`Invalid language file path: ${file.path}`)
         }
-        if (!file.path.endsWith('.json')) {
-          errors.push(`Language file should be JSON: ${file.path}`)
+        if (!file.path.endsWith('.json') && !file.path.endsWith('.lang')) {
+          errors.push(`Language file should be JSON or LANG: ${file.path}`)
         }
       }
     })
