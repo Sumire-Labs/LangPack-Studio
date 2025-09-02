@@ -10,7 +10,7 @@
 </div>
 
 <div align="center">
-  <h3>MinecraftのModを簡単に翻訳してリソースパックを作成</h3>
+  <h3>modの言語ファイルをguiを使用し直感的に翻訳</h3>
   <p>複雑な翻訳作業を直感的に行えるWebアプリケーション</p>
 </div>
 
