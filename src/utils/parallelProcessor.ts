@@ -249,7 +249,7 @@ export class ParallelTranslationProcessor {
     items: T[],
     translator: (text: string) => Promise<string>,
     onProgress?: (progress: number) => void
-  ): Promise<Map<string, string>> {
+  ): Promise<Map<string, string | { error: string }>> {
     // 重複を除去
     const uniqueTexts = new Map<string, string[]>()
     items.forEach(item => {
@@ -267,7 +267,7 @@ export class ParallelTranslationProcessor {
       priority: this.calculatePriority(text, uniqueTexts.get(text)!.length)
     })).sort((a, b) => b.priority - a.priority) // 高優先度から処理
 
-    const results = new Map<string, string>()
+    const results = new Map<string, string | { error: string }>()
     let completed = 0
     const total = translationTasks.length
 
@@ -286,9 +286,10 @@ export class ParallelTranslationProcessor {
             this.stats.processed += keys.length
             this.stats.apiCalls++
           } catch (error) {
-            console.error(`Translation failed for "${text}":`, error)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            console.error(`Translation failed for "${text.substring(0, 50)}...":`, errorMessage)
             keys.forEach(key => {
-              results.set(key, text)
+              results.set(key, { error: `翻訳失敗: ${errorMessage}` })
             })
             this.stats.failed += keys.length
           }

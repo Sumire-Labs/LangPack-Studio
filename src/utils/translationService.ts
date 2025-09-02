@@ -157,6 +157,35 @@ class GoogleTranslateService {
     const stats = this.parallelProcessor.getStats()
     console.log(`[Google] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
 
+    // 結果を変換（Google Translate用）
+    for (const entry of request.entries) {
+      const translated = translationResults.get(entry.key)
+      if (translated && typeof translated === 'object' && 'error' in translated) {
+        // エラーの場合
+        result.failed.push({
+          key: entry.key,
+          error: translated.error
+        })
+        result.totalFailed++
+      } else if (translated && translated !== entry.text) {
+        // 翻訳成功
+        result.translations.push({
+          key: entry.key,
+          original: entry.text,
+          translated: translated as string,
+          fromCache: false
+        })
+        result.totalProcessed++
+      } else {
+        // 翻訳されなかった（元のテキストと同じ）
+        result.failed.push({
+          key: entry.key,
+          error: '翻訳されませんでした（元のテキストと同じ結果）'
+        })
+        result.totalFailed++
+      }
+    }
+
     result.success = result.totalFailed < request.entries.length / 2 // 半数以上成功すれば成功とみなす
     return result
   }
@@ -425,22 +454,31 @@ Translation:`
       totalFailed: 0
     }
 
-    // 結果を変換
+    // 結果を変換（Gemini用）
     for (const entry of request.entries) {
       const translated = translationResults.get(entry.key)
-      if (translated && translated !== entry.text) {
+      if (translated && typeof translated === 'object' && 'error' in translated) {
+        // エラーの場合
+        result.failed.push({
+          key: entry.key,
+          error: translated.error
+        })
+        result.totalFailed++
+      } else if (translated && translated !== entry.text) {
+        // 翻訳成功
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated,
+          translated: translated as string,
           confidence: 0.9,
           fromCache: false
         })
         result.totalProcessed++
       } else {
+        // 翻訳されなかった（元のテキストと同じ）
         result.failed.push({
           key: entry.key,
-          error: 'Translation failed or returned original text'
+          error: '翻訳されませんでした（元のテキストと同じ結果）'
         })
         result.totalFailed++
       }
@@ -536,21 +574,30 @@ class LibreTranslateService {
       totalFailed: 0
     }
 
-    // 結果を変換
+    // 結果を変換（LibreTranslate用）
     for (const entry of request.entries) {
       const translated = translationResults.get(entry.key)
-      if (translated && translated !== entry.text) {
+      if (translated && typeof translated === 'object' && 'error' in translated) {
+        // エラーの場合
+        result.failed.push({
+          key: entry.key,
+          error: translated.error
+        })
+        result.totalFailed++
+      } else if (translated && translated !== entry.text) {
+        // 翻訳成功
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated,
+          translated: translated as string,
           fromCache: false
         })
         result.totalProcessed++
       } else {
+        // 翻訳されなかった（元のテキストと同じ）
         result.failed.push({
           key: entry.key,
-          error: 'Translation failed or returned original text'
+          error: '翻訳されませんでした（元のテキストと同じ結果）'
         })
         result.totalFailed++
       }

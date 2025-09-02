@@ -42,7 +42,8 @@ import {
   Settings,
   CheckCircle,
   Error as ErrorIcon,
-  Warning
+  Warning,
+  Info
 } from '@mui/icons-material'
 import { useTranslation } from '../hooks/useTranslation'
 import { ParseResult } from '../utils/languageParser'
@@ -87,6 +88,8 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
   const [editingTranslations, setEditingTranslations] = useState<{ [key: string]: string }>({})
   const [autoApprove, setAutoApprove] = useState(false)
   const [excludePatterns, setExcludePatterns] = useState<string[]>(['%%', '%s', '%d', '\\n'])
+  const [showErrorDetails, setShowErrorDetails] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<{ key: string; error: string; original: string }[]>([])
 
   const supportedLanguages = getSupportedLanguages()
   const allEntries = parseResults.flatMap(result => result.entries)
@@ -133,6 +136,16 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
       
       if (result) {
         if (result.success) {
+          // エラー詳細を保存
+          if (result.failed.length > 0) {
+            const errors = result.failed.map(f => ({
+              key: f.key,
+              error: f.error,
+              original: entriesToTranslate.find(e => e.key === f.key)?.text || ''
+            }))
+            setErrorDetails(errors)
+          }
+
           onNotification?.(
             `${result.totalProcessed}個のエントリーを翻訳しました（失敗: ${result.totalFailed}個）`, 
             result.totalFailed > 0 ? 'warning' : 'success'
@@ -437,9 +450,22 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
                   size="small" 
                   color="error"
                   variant="outlined"
+                  onClick={() => errorDetails.length > 0 && setShowErrorDetails(true)}
+                  clickable={errorDetails.length > 0}
                 />
               )}
             </Box>
+
+            {lastBatchResult.totalFailed > 0 && errorDetails.length > 0 && (
+              <Button
+                size="small"
+                startIcon={<Info />}
+                onClick={() => setShowErrorDetails(true)}
+                sx={{ mt: 1 }}
+              >
+                エラー詳細を表示
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -488,6 +514,52 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
             startIcon={<Save />}
           >
             適用 ({Object.keys(editingTranslations).length})
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error Details Dialog */}
+      <Dialog
+        open={showErrorDetails}
+        onClose={() => setShowErrorDetails(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ErrorIcon color="error" />
+            翻訳エラーの詳細
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            翻訳に失敗したエントリーとエラー理由の詳細です。
+          </Typography>
+          
+          <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+            {errorDetails.map((error, index) => (
+              <ListItem key={error.key} divider={index < errorDetails.length - 1}>
+                <Box sx={{ width: '100%' }}>
+                  <Typography variant="subtitle2" color="error" gutterBottom>
+                    <ErrorIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    {error.error}
+                  </Typography>
+                  
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    キー: {error.key}
+                  </Typography>
+                  
+                  <Typography variant="body2" sx={{ mt: 1, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    {error.original}
+                  </Typography>
+                </Box>
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowErrorDetails(false)}>
+            閉じる
           </Button>
         </DialogActions>
       </Dialog>
