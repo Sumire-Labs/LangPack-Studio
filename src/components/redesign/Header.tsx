@@ -19,6 +19,7 @@ import {
   Info
 } from '@mui/icons-material'
 import { Chip, Divider } from '@mui/material'
+import { getVersionInfo } from '../../utils/appVersion'
 
 interface HeaderProps {
   darkMode: boolean
@@ -32,6 +33,7 @@ const Header: React.FC<HeaderProps> = ({
   onReset
 }) => {
   const theme = useTheme()
+  const versionInfo = getVersionInfo()
 
   return (
     <AppBar
@@ -59,9 +61,9 @@ const Header: React.FC<HeaderProps> = ({
             LangPack Studio
           </Typography>
           
-          <Tooltip title="Version 1.0.1-dev">
+          <Tooltip title={`Version ${versionInfo.version} (Built: ${versionInfo.buildDate})`}>
             <Chip
-              label="v1.0.1-dev"
+              label={`v${versionInfo.version}`}
               size="small"
               variant="outlined"
               sx={{

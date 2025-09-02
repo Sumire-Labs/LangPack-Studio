@@ -1,7 +1,7 @@
 {
   "name": "langpack-studio",
   "productName": "LangPack Studio",
-  "version": "1.0.0",
+  "version": "1.2.0-alpha",
   "description": "✨ Minecraft Mod Language Translation Resource Pack Creator with Material Design 3",
   "homepage": "https://github.com/Sumire-Labs/LangPack-Studio",
   "repository": {

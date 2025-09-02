@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron'
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
+import packageJson from '../package.json'
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -25,7 +26,7 @@ function createWindow() {
       webSecurity: true
     },
     icon: process.env.VITE_PUBLIC ? path.join(process.env.VITE_PUBLIC, 'icon.png') : undefined,
-    title: 'LangPack Studio',
+    title: `LangPack Studio v${packageJson.version}`,
     show: false
   })
 
