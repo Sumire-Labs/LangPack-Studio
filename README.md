@@ -1,6 +1,7 @@
 # 🌐 LangPack Studio
 
 <div align="center">
+  <img src="https://img.shields.io/badge/Version-1.2.1--alpha-purple" alt="Version">
   <img src="https://img.shields.io/badge/Minecraft-1.21.4-green" alt="Minecraft Version">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform">
   <img src="https://img.shields.io/badge/License-BSD--3--Clause-blue" alt="License">
