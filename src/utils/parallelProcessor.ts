@@ -473,7 +473,7 @@ export class AdaptiveParallelTranslationProcessor extends ParallelTranslationPro
     items: T[],
     translator: (text: string) => Promise<string>,
     onProgress?: (progress: number) => void
-  ): Promise<Map<string, string | { error: string }>> {
+  ): Promise<Map<string, string>> {
     console.log(`[AdaptiveProcessor] Starting adaptive translation of ${items.length} items`)
     
     // セッション開始
@@ -487,8 +487,8 @@ export class AdaptiveParallelTranslationProcessor extends ParallelTranslationPro
     // アダプティブトランスレータでラップ
     const adaptiveTranslator = this.wrapTranslatorWithMetrics(translator)
     
-    // 親クラスのバッチ処理を実行
-    const results = await super.translateSmartBatch(items, adaptiveTranslator, onProgress)
+    // 親クラスのtranslateManyを使用（型の整合性のため）
+    const results = await super.translateMany(items, adaptiveTranslator, onProgress)
     
     // 最終指標レポート
     this.reportFinalMetrics()

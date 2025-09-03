@@ -224,16 +224,30 @@ function App() {
                 onComplete={(success, message) => {
                   showNotification(message, success ? 'success' : 'error')
                 }}
-                sx={{ flexGrow: 1 }}
+                sx={{ mb: 2 }}
               />
               
-              {/* 単体ファイル出力ボタン */}
-              <Box sx={{ mt: 2 }}>
+              {/* 単体ファイル出力ボタン - デバッグ用 */}
+              <Box sx={{ 
+                mt: 'auto', 
+                pt: 2, 
+                borderTop: 1, 
+                borderColor: 'divider',
+                bgcolor: 'error.light',
+                p: 2,
+                borderRadius: 1
+              }}>
+                <Typography variant="caption" color="white" gutterBottom>
+                  DEBUG: SingleFileExport コンポーネント
+                </Typography>
                 <SingleFileExport
                   parseResults={parseResults}
                   translatedEntries={translatedEntries}
                   onNotification={showNotification}
                 />
+                <Typography variant="caption" color="white" sx={{ mt: 1, display: 'block' }}>
+                  parseResults: {parseResults.length}, translatedEntries: {translatedEntries.length}
+                </Typography>
               </Box>
             </Paper>
           </Grid>

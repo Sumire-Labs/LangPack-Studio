@@ -250,15 +250,29 @@ const SingleFileExport: React.FC<SingleFileExportProps> = ({
     onNotification?.('クリップボードにコピーしました', 'success')
   }
 
+  console.log('SingleFileExport render:', { parseResults: parseResults.length, translatedEntries: translatedEntries.length })
+
   return (
     <>
+      <Box sx={{ bgcolor: 'warning.light', p: 1, mb: 1, borderRadius: 1 }}>
+        <Typography variant="caption">
+          🔧 DEBUG: コンポーネント表示中
+        </Typography>
+      </Box>
       <Button
-        variant="outlined"
+        variant="contained"
         startIcon={<FileDownload />}
         onClick={() => setOpen(true)}
-        size="small"
+        fullWidth
+        sx={{ 
+          bgcolor: 'error.main',
+          color: 'white',
+          fontSize: '1.2rem',
+          py: 2,
+          '&:hover': { bgcolor: 'error.dark' }
+        }}
       >
-        単体ファイル出力
+        🔄 単体ファイル出力 DEBUG
       </Button>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>

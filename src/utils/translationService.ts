@@ -35,9 +35,14 @@ export interface BatchTranslationResult {
 // 無料のGoogle Translate API (非公式、制限あり)
 class GoogleTranslateService {
   private baseUrl = 'https://translate.googleapis.com/translate_a/single'
+  // 予備エンドポイント（CORS対応）- 将来の拡張用
+  // private backupUrls = [
+  //   'https://clients5.google.com/translate_a/t',
+  //   'https://translate.googleapis.com/translate_a/single'
+  // ]
   private lastRequestTime = 0
   private minDelay = 100 // 100ms between requests to avoid rate limiting
-  private parallelProcessor = createAdaptiveParallelProcessor('google', 3, 200) // アダプティブ並列処理
+  private parallelProcessor = new ParallelTranslationProcessor(3, 200) // 一時的に通常処理でテスト
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -62,25 +67,45 @@ class GoogleTranslateService {
     })
 
     try {
-      const response = await fetch(`${this.baseUrl}?${params}`)
+      console.log(`[Google] Translating: "${text.substring(0, 50)}..." from ${from} to ${to}`)
+      
+      const response = await fetch(`${this.baseUrl}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+        mode: 'cors'
+      })
+      
       if (!response.ok) {
-        throw new Error(`Translation request failed: ${response.status}`)
+        const errorText = await response.text()
+        console.error(`[Google] API Error ${response.status}:`, errorText)
+        throw new Error(`Google Translate API error: ${response.status} - ${errorText}`)
       }
       
       const data = await response.json()
+      console.log(`[Google] Response:`, JSON.stringify(data).substring(0, 200))
       
       if (!data[0] || !Array.isArray(data[0])) {
-        throw new Error('Invalid translation response format')
+        console.error('[Google] Invalid response format:', data)
+        throw new Error('Invalid translation response format from Google')
       }
 
       // Extract translated text from response
       const translatedText = data[0]
+        .filter((item: any) => Array.isArray(item) && item[0])
         .map((item: any[]) => item[0])
         .join('')
 
+      console.log(`[Google] Translated: "${translatedText.substring(0, 50)}..."`)
       return translatedText || text
     } catch (error) {
-      console.error('Translation error:', error)
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('[Google] Network error - possible CORS issue:', error)
+        throw new Error('ネットワークエラー: Google翻訳APIに接続できません。CORSエラーの可能性があります。')
+      }
+      console.error('[Google] Translation error:', error)
       throw error
     }
   }
@@ -120,7 +145,7 @@ class GoogleTranslateService {
     console.log(`[Google] Starting batch translation of ${request.entries.length} entries`)
     
     // 並列翻訳を実行
-    const translationResults = await this.parallelProcessor.translateSmartBatch(
+    const translationResults = await this.parallelProcessor.translateMany(
       request.entries.map(entry => ({ text: entry.text, key: entry.key })),
       (text: string) => this.makeRequest(text, request.from, request.to),
       onProgress
@@ -134,45 +159,18 @@ class GoogleTranslateService {
       totalFailed: 0
     }
 
+    const stats = this.parallelProcessor.getStats()
+    console.log(`[Google] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
+
     // 結果を変換
     for (const entry of request.entries) {
       const translated = translationResults.get(entry.key)
       if (translated && translated !== entry.text) {
-        result.translations.push({
-          key: entry.key,
-          original: entry.text,
-          translated,
-          fromCache: false
-        })
-        result.totalProcessed++
-      } else {
-        result.failed.push({
-          key: entry.key,
-          error: 'Translation failed or returned original text'
-        })
-        result.totalFailed++
-      }
-    }
-
-    const stats = this.parallelProcessor.getStats()
-    console.log(`[Google] Batch completed: ${stats.processed} processed, ${stats.failed} failed, ${stats.apiCalls} API calls`)
-
-    // 結果を変換（Google Translate用）
-    for (const entry of request.entries) {
-      const translated = translationResults.get(entry.key)
-      if (translated && typeof translated === 'object' && 'error' in translated) {
-        // エラーの場合
-        result.failed.push({
-          key: entry.key,
-          error: translated.error
-        })
-        result.totalFailed++
-      } else if (translated && translated !== entry.text) {
         // 翻訳成功
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translated as string,
+          translated: translated,
           fromCache: false
         })
         result.totalProcessed++
@@ -364,7 +362,7 @@ Translation:`
         } catch (e) {
           console.error('[Gemini Debug] Could not parse error as JSON')
         }
-        throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || errorText || 'Unknown error'}`)
+        throw new Error(`Gemini API request failed: ${response.status} - ${(errorData as any)?.error?.message || errorText || 'Unknown error'}`)
       }
 
       const data = await response.json()
@@ -457,19 +455,12 @@ Translation:`
     // 結果を変換（Gemini用）
     for (const entry of request.entries) {
       const translated = translationResults.get(entry.key)
-      if (translated && typeof translated === 'object' && 'error' in translated) {
-        // エラーの場合
-        result.failed.push({
-          key: entry.key,
-          error: translated.error
-        })
-        result.totalFailed++
-      } else if (translated && translated !== entry.text) {
+      if (translated && translated !== entry.text) {
         // 翻訳成功
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translated as string,
+          translated: translated,
           confidence: 0.9,
           fromCache: false
         })
@@ -497,7 +488,7 @@ class LibreTranslateService {
   private baseUrl: string
   private parallelProcessor = createAdaptiveParallelProcessor('libretranslate', 2, 500) // LibreTranslateアダプティブ処理
 
-  constructor(apiUrl = 'https://libretranslate.de/translate') {
+  constructor(apiUrl = 'https://libretranslate.com/translate') {
     this.baseUrl = apiUrl
   }
 
@@ -577,19 +568,12 @@ class LibreTranslateService {
     // 結果を変換（LibreTranslate用）
     for (const entry of request.entries) {
       const translated = translationResults.get(entry.key)
-      if (translated && typeof translated === 'object' && 'error' in translated) {
-        // エラーの場合
-        result.failed.push({
-          key: entry.key,
-          error: translated.error
-        })
-        result.totalFailed++
-      } else if (translated && translated !== entry.text) {
+      if (translated && translated !== entry.text) {
         // 翻訳成功
         result.translations.push({
           key: entry.key,
           original: entry.text,
-          translated: translated as string,
+          translated: translated,
           fromCache: false
         })
         result.totalProcessed++
