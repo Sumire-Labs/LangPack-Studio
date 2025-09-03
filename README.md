@@ -10,13 +10,47 @@
 </div>
 
 <div align="center">
-  <h3>MinecraftのModを簡単に翻訳してリソースパックを作成</h3>
+  <h3>modの言語ファイルをguiを使用し直感的に翻訳</h3>
   <p>複雑な翻訳作業を直感的に行えるWebアプリケーション</p>
 </div>
 
 ---
 
-## 🚀 主な機能
+## 📜 説明
+
+本ツールは以下の方を対象としています：
+- **個人利用目的**の方
+- どうしても日本語リソースパックを使用したい方
+
+### ⚠️ 重要な注意事項
+
+### 翻訳品質について
+本ツールの翻訳は以下の特徴があります：
+- **機械翻訳とAI翻訳**をメインとして使用
+- **翻訳精度は低品質**です
+- 専門の翻訳者による高品質な日本語訳とは**比べ物にならないレベル**
+
+### 利用目的の制限
+- あくまで「**どうしても日本語訳が欲しい**」という個人的な需要を満たすためのツール
+- 公式配布や商用利用は想定していません
+
+## 🚫 禁止事項
+
+以下の行為は**絶対に行わないでください**：
+
+- 本ツールで生成したものを自作リソースパックや公式翻訳リソースパックなどと宣伝する行為
+- 生成した言語ファイルを使用して翻訳元Modに言語追加のIssueを送信する行為
+- 低品質な翻訳リソースパックを広めるような行為全般
+
+### 禁止する理由
+- 低品質な翻訳リソースパックが広まることで、品質低下を招く可能性
+- 公式Modや翻訳者に迷惑をかける恐れ
+
+## 利用上の心構え
+
+本ツールをご利用の際は、上記の注意事項を十分に理解し、**個人の範囲内での利用**に留めていただくようお願いいたします。
+
+## 🚀 機能
 
 ### 📁 **スマートファイル処理**
 - **多形式対応**: JSON、LANGファイルの自動解析
@@ -24,7 +58,7 @@
 - **バッチ処理**: 複数ファイルの同時処理
 - **エラー検出**: 不正なファイル形式を自動検出
 
-### 🌐 **多言語翻訳システム**
+### 🌐 **翻訳システム**
 - **6つの翻訳API対応**:
   - **Google Translate** (無料)
   - **DeepL** (無料)
@@ -40,8 +74,6 @@
 - **包括的品質分析**: プレースホルダー、フォーマット、一貫性をチェック
 - **詳細レポート**: 問題点と改善提案を表示
 - **フィルタリング機能**: エラー・警告・情報レベルで絞り込み
-- **エクスポート対応**: 品質レポートのJSON出力
-
 ### 📊 **翻訳統計・レポート**
 - **使用状況分析**: サービス別・言語ペア別の利用統計
 - **コスト計算**: 各翻訳APIの推定コストを自動算出
@@ -103,33 +135,6 @@ npm run electron:build # Electron配布版ビルド
 - **Quality Analysis**: 独自開発の品質チェックエンジン
 - **Statistics**: localStorage + 統計分析システム
 - **API Server**: Express.js風のルーティングシステム
-
-## 🌍 翻訳API設定
-
-### オプション
-
-| サービス | 料金目安 | 特徴 |
-|---------|---------|------|
-| **DeepL** | $6.99/月〜 | 高品質 |
-| **Google Translate** | $20/100万文字 | 汎用性が高い |
-| **Google Gemini** | $0.00025/1Kトークン | AI翻訳 |
-| **Azure Translator** | $10/100万文字 | 企業向け |
-| **OpenAI** | $0.002/1Kトークン | AI翻訳 |
-
-詳細な設定方法は[翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide)をご覧ください。
-
-## 📚 ドキュメント
-
-| 📖 ガイド | 📝 内容 |
-|----------|--------|
-| [🏠 Home](https://github.com/Sumire-Labs/LangPack-Studio/wiki) | プロジェクト概要・クイックスタート |
-| [📖 使い方ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/User-Guide) | 詳細な操作手順 |
-| [🌐 翻訳設定ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Translation-Guide) | API設定と翻訳オプション |
-| [🎯 品質チェックガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Quality-Check-Guide) | 翻訳品質分析の使い方 |
-| [📊 統計・レポートガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Statistics-Guide) | 使用統計とコスト分析 |
-| [🔌 API統合ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/API-Guide) | 外部連携とAPI仕様 |
-| [🔧 トラブルシューティング](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Troubleshooting) | よくある問題と解決方法 |
-| [👨‍💻 開発者ガイド](https://github.com/Sumire-Labs/LangPack-Studio/wiki/Developer-Guide) | ビルド方法とコントリビューション |
 
 ## 💰 License
 
