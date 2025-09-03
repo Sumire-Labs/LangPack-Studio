@@ -22,6 +22,7 @@ import ResourcePackGenerator from './components/ResourcePackGenerator'
 import StatisticsPanel from './components/StatisticsPanel'
 import PreviewModal from './components/PreviewModal'
 import TranslationPanel from './components/TranslationPanel'
+import SingleFileExport from './components/SingleFileExport'
 import { 
   UploadFab, 
   NotificationSnackbar, 
@@ -225,6 +226,15 @@ function App() {
                 }}
                 sx={{ flexGrow: 1 }}
               />
+              
+              {/* 単体ファイル出力ボタン */}
+              <Box sx={{ mt: 2 }}>
+                <SingleFileExport
+                  parseResults={parseResults}
+                  translatedEntries={translatedEntries}
+                  onNotification={showNotification}
+                />
+              </Box>
             </Paper>
           </Grid>
 
