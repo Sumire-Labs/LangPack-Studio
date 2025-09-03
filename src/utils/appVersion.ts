@@ -3,7 +3,7 @@
 
 // For Vite builds, we need to define the version at build time
 // This is handled by Vite's define config
-export const APP_VERSION = __APP_VERSION__ || '1.2.1-alpha'
+export const APP_VERSION = __APP_VERSION__ || '1.3.0'
 export const APP_NAME = 'LangPack Studio'
 
 export const getVersionInfo = () => {
