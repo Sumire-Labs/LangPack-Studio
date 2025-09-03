@@ -1,5 +1,5 @@
 import { translationCache } from './translationCache'
-import { ParallelTranslationProcessor } from './parallelProcessor'
+import { ParallelTranslationProcessor, createAdaptiveParallelProcessor } from './parallelProcessor'
 
 export interface TranslationRequest {
   text: string
@@ -37,7 +37,7 @@ class GoogleTranslateService {
   private baseUrl = 'https://translate.googleapis.com/translate_a/single'
   private lastRequestTime = 0
   private minDelay = 100 // 100ms between requests to avoid rate limiting
-  private parallelProcessor = new ParallelTranslationProcessor(3, 200) // 最大3並列、200ms間隔
+  private parallelProcessor = createAdaptiveParallelProcessor('google', 3, 200) // アダプティブ並列処理
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -195,7 +195,7 @@ class GoogleTranslateService {
 class GeminiTranslateService {
   private apiKey: string
   private modelName: string
-  private parallelProcessor = new ParallelTranslationProcessor(3, 500) // Gemini 2.0は高速・高制限
+  private parallelProcessor = createAdaptiveParallelProcessor('gemini', 5, 300) // Gemini 2.0アダプティブ処理
 
   // 使用可能なGeminiモデル
   private static readonly AVAILABLE_MODELS = {
@@ -495,7 +495,7 @@ Translation:`
 // Alternative free translation service using LibreTranslate (if available)
 class LibreTranslateService {
   private baseUrl: string
-  private parallelProcessor = new ParallelTranslationProcessor(2, 500) // 最大2並列、500ms間隔
+  private parallelProcessor = createAdaptiveParallelProcessor('libretranslate', 2, 500) // LibreTranslateアダプティブ処理
 
   constructor(apiUrl = 'https://libretranslate.de/translate') {
     this.baseUrl = apiUrl

@@ -3,6 +3,8 @@
  * 並列処理による翻訳の最適化
  */
 
+import { AdaptiveConcurrencyManager, createAdaptiveConcurrencyManager } from './adaptiveConcurrency'
+
 export interface QueueItem<T> {
   fn: () => Promise<T>
   resolve: (value: T) => void
@@ -426,9 +428,223 @@ export class RateLimiter {
   }
 }
 
+/**
+ * Adaptive Parallel Translation Processor - 適応的並列翻訳プロセッサ
+ * ネットワーク状態に応じて並列度を動的調整
+ */
+export class AdaptiveParallelTranslationProcessor extends ParallelTranslationProcessor {
+  private adaptiveManager: AdaptiveConcurrencyManager
+  private requestStartTimes = new Map<string, number>()
+  private currentSession = {
+    totalRequests: 0,
+    successfulRequests: 0,
+    failedRequests: 0,
+    startTime: Date.now()
+  }
+
+  constructor(
+    private service: 'google' | 'gemini' | 'libretranslate',
+    initialConcurrency?: number,
+    rateLimitMs?: number
+  ) {
+    super(initialConcurrency || 3, rateLimitMs || 200)
+    this.adaptiveManager = createAdaptiveConcurrencyManager(service, {
+      maxConcurrent: initialConcurrency,
+      rateLimitMs: rateLimitMs
+    })
+    
+    console.log(`[AdaptiveProcessor] Initialized for ${service}`)
+    this.startMetricsCollection()
+  }
+
+  /**
+   * 指標収集開始
+   */
+  private startMetricsCollection(): void {
+    setInterval(() => {
+      this.collectAndReportMetrics()
+    }, 3000) // 3秒ごとに指標を収集
+  }
+
+  /**
+   * スマートバッチ翻訳（アダプティブ版）
+   */
+  async translateSmartBatch<T extends { text: string; key: string }>(
+    items: T[],
+    translator: (text: string) => Promise<string>,
+    onProgress?: (progress: number) => void
+  ): Promise<Map<string, string | { error: string }>> {
+    console.log(`[AdaptiveProcessor] Starting adaptive translation of ${items.length} items`)
+    
+    // セッション開始
+    this.currentSession = {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      startTime: Date.now()
+    }
+
+    // アダプティブトランスレータでラップ
+    const adaptiveTranslator = this.wrapTranslatorWithMetrics(translator)
+    
+    // 親クラスのバッチ処理を実行
+    const results = await super.translateSmartBatch(items, adaptiveTranslator, onProgress)
+    
+    // 最終指標レポート
+    this.reportFinalMetrics()
+    
+    return results
+  }
+
+  /**
+   * トランスレータをメトリクス収集でラップ
+   */
+  private wrapTranslatorWithMetrics(translator: (text: string) => Promise<string>) {
+    return async (text: string): Promise<string> => {
+      const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const startTime = Date.now()
+      
+      this.requestStartTimes.set(requestId, startTime)
+      this.currentSession.totalRequests++
+
+      try {
+        // 現在の設定を動的に更新
+        const config = this.adaptiveManager.getCurrentConfig()
+        this.updateProcessorConfig(config)
+
+        // 翻訳実行
+        const result = await translator(text)
+        
+        // 成功メトリクス記録
+        const responseTime = Date.now() - startTime
+        this.recordSuccessMetrics(requestId, responseTime)
+        this.currentSession.successfulRequests++
+        
+        return result
+      } catch (error) {
+        // エラーメトリクス記録
+        const responseTime = Date.now() - startTime
+        this.recordErrorMetrics(requestId, responseTime, error)
+        this.currentSession.failedRequests++
+        
+        throw error
+      } finally {
+        this.requestStartTimes.delete(requestId)
+      }
+    }
+  }
+
+  /**
+   * プロセッサ設定を動的更新
+   */
+  private updateProcessorConfig(config: any): void {
+    // PoolのmaxConcurrentを動的に変更
+    if (this.pool && 'maxConcurrent' in this.pool) {
+      (this.pool as any).maxConcurrent = config.maxConcurrent
+      (this.pool as any).rateLimitMs = config.rateLimitMs
+    }
+  }
+
+  /**
+   * 成功メトリクス記録
+   */
+  private recordSuccessMetrics(requestId: string, responseTime: number): void {
+    console.log(`[AdaptiveProcessor] ✅ ${this.service} request completed: ${responseTime}ms`)
+  }
+
+  /**
+   * エラーメトリクス記録
+   */
+  private recordErrorMetrics(requestId: string, responseTime: number, error: any): void {
+    console.warn(`[AdaptiveProcessor] ❌ ${this.service} request failed: ${responseTime}ms`, error.message)
+  }
+
+  /**
+   * 指標を収集・レポート
+   */
+  private collectAndReportMetrics(): void {
+    const sessionDuration = Date.now() - this.currentSession.startTime
+    if (sessionDuration < 1000) return // 最低1秒のデータが必要
+
+    const durationInSeconds = sessionDuration / 1000
+    const throughput = this.currentSession.successfulRequests / durationInSeconds
+    const errorRate = this.currentSession.totalRequests > 0 
+      ? this.currentSession.failedRequests / this.currentSession.totalRequests 
+      : 0
+
+    // アクティブリクエストの平均応答時間を計算
+    const currentTime = Date.now()
+    const activeTimes = Array.from(this.requestStartTimes.values())
+    const avgActiveTime = activeTimes.length > 0
+      ? activeTimes.reduce((sum, time) => sum + (currentTime - time), 0) / activeTimes.length
+      : 500 // デフォルト
+
+    const metrics = {
+      responseTime: avgActiveTime,
+      errorRate,
+      throughput,
+      successRate: 1 - errorRate,
+      queueDepth: this.requestStartTimes.size
+    }
+
+    // アダプティブマネージャーに指標を送信
+    this.adaptiveManager.recordMetrics(metrics)
+  }
+
+  /**
+   * 最終指標レポート
+   */
+  private reportFinalMetrics(): void {
+    const totalTime = Date.now() - this.currentSession.startTime
+    const stats = this.adaptiveManager.getPerformanceStats()
+    
+    console.log(`[AdaptiveProcessor] Session completed for ${this.service}:`, {
+      duration: `${(totalTime / 1000).toFixed(1)}s`,
+      requests: {
+        total: this.currentSession.totalRequests,
+        successful: this.currentSession.successfulRequests,
+        failed: this.currentSession.failedRequests
+      },
+      performance: {
+        throughput: `${((this.currentSession.successfulRequests / totalTime) * 1000).toFixed(1)} req/s`,
+        successRate: `${((this.currentSession.successfulRequests / this.currentSession.totalRequests) * 100).toFixed(1)}%`,
+        finalConfig: stats.config
+      },
+      networkCondition: stats.current.status
+    })
+  }
+
+  /**
+   * アダプティブ統計取得
+   */
+  getAdaptiveStats() {
+    return this.adaptiveManager.getPerformanceStats()
+  }
+
+  /**
+   * 手動リセット
+   */
+  resetAdaptive(): void {
+    this.adaptiveManager.reset()
+  }
+
+  /**
+   * クリーンアップ
+   */
+  dispose(): void {
+    this.adaptiveManager.dispose()
+  }
+}
+
 // エクスポート
 export const createParallelProcessor = (maxConcurrent?: number) => 
   new ParallelTranslationProcessor(maxConcurrent)
+
+export const createAdaptiveParallelProcessor = (
+  service: 'google' | 'gemini' | 'libretranslate',
+  initialConcurrency?: number,
+  rateLimitMs?: number
+) => new AdaptiveParallelTranslationProcessor(service, initialConcurrency, rateLimitMs)
 
 export const createRateLimiter = (maxRequests: number, windowMs: number) =>
   new RateLimiter(maxRequests, windowMs)
