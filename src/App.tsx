@@ -216,29 +216,30 @@ function App() {
                 リソースパック生成
               </Typography>
               
-              <ResourcePackGenerator
-                files={files}
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-                translatedEntries={translatedEntries}
-                onComplete={(success, message) => {
-                  showNotification(message, success ? 'success' : 'error')
-                }}
-                sx={{ mb: 2 }}
-              />
+              <Box sx={{ flex: 1, overflow: 'auto', mb: 2 }}>
+                <ResourcePackGenerator
+                  files={files}
+                  isProcessing={isProcessing}
+                  setIsProcessing={setIsProcessing}
+                  translatedEntries={translatedEntries}
+                  onComplete={(success, message) => {
+                    showNotification(message, success ? 'success' : 'error')
+                  }}
+                />
+              </Box>
               
               {/* 単体ファイル出力ボタン - デバッグ用 */}
               <Box sx={{ 
-                mt: 'auto', 
-                pt: 2, 
-                borderTop: 1, 
-                borderColor: 'divider',
+                borderTop: 2, 
+                borderColor: 'error.main',
                 bgcolor: 'error.light',
                 p: 2,
-                borderRadius: 1
+                mx: -3,
+                mb: -3,
+                borderRadius: '0 0 4px 4px'
               }}>
-                <Typography variant="caption" color="white" gutterBottom>
-                  DEBUG: SingleFileExport コンポーネント
+                <Typography variant="h6" color="white" gutterBottom>
+                  🔥 単体ファイル出力機能
                 </Typography>
                 <SingleFileExport
                   parseResults={parseResults}
@@ -246,7 +247,7 @@ function App() {
                   onNotification={showNotification}
                 />
                 <Typography variant="caption" color="white" sx={{ mt: 1, display: 'block' }}>
-                  parseResults: {parseResults.length}, translatedEntries: {translatedEntries.length}
+                  DEBUG: parseResults={parseResults.length}, translatedEntries={translatedEntries.length}
                 </Typography>
               </Box>
             </Paper>
