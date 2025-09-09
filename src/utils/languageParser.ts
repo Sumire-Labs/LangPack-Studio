@@ -198,7 +198,7 @@ export class LanguageParser {
   private static detectLocaleFromFilename(filename: string): string | undefined {
     // Extract locale from filename like "en_us.json", "ja_jp.lang", etc.
     const nameWithoutExt = filename.replace(/\.(json|lang)$/, '')
-    const localeRegex = /^([a-z]{2}_[a-z]{2})$/
+    const localeRegex = /^([a-z]{2}_[a-z]{2})$/i
     
     const match = nameWithoutExt.match(localeRegex)
     return match ? match[1] : undefined
