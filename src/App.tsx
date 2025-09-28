@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { selectFiles } from './utils/webFileUtils'
 import {
   AppBar,
   Toolbar,
@@ -79,7 +80,7 @@ function App() {
 
   const handleSelectFiles = async () => {
     try {
-      const selectedFiles = await window.electronAPI?.selectFiles()
+      const selectedFiles = await selectFiles()
       if (selectedFiles && selectedFiles.length > 0) {
         handleFilesSelected(selectedFiles)
       }

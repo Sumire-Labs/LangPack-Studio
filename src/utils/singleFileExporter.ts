@@ -199,15 +199,7 @@ export class SingleFileExporter {
     content: string,
     fileName: string
   ): Promise<boolean> {
-    if (window.electronAPI?.saveFile) {
-      try {
-        const saved = await window.electronAPI.saveFile(content, fileName)
-        return saved !== null
-      } catch (error) {
-        console.error('Failed to save file via Electron:', error)
-        return false
-      }
-    }
+    // This method is no longer needed for web version
     return false
   }
 

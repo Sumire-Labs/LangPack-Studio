@@ -365,27 +365,16 @@ export class ResourcePackGenerator {
     filename: string = 'resource-pack.zip'
   ): Promise<boolean> {
     try {
-      if (window.electronAPI?.saveResourcePack) {
-        // Use Electron's save dialog
-        const buffer = await blob.arrayBuffer()
-        const uint8Array = new Uint8Array(buffer)
-        // .zipを除いたファイル名をElectronに渡す
-        const baseFileName = filename.replace(/\.zip$/i, '')
-        console.log(`Saving resource pack - Original: "${filename}", Base: "${baseFileName}"`)
-        const savedPath = await window.electronAPI.saveResourcePack(Buffer.from(uint8Array), baseFileName)
-        return savedPath !== null
-      } else {
-        // Fallback: use browser download
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = filename
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-        return true
-      }
+      // Use browser download
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      return true
     } catch (error) {
       console.error('Failed to save resource pack:', error)
       return false
