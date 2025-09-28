@@ -1,8 +1,8 @@
 {
   "name": "langpack-studio",
   "productName": "LangPack Studio",
-  "version": "1.3.0",
-  "description": "✨ Minecraft Mod Language Translation Resource Pack Creator with Material Design 3",
+  "version": "1.3.1",
+  "description": "Minecraft Mod Language Translation Resource Pack Creator with Material Design 3",
   "homepage": "https://github.com/Sumire-Labs/LangPack-Studio",
   "repository": {
     "type": "git",
@@ -15,6 +15,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
@@ -51,7 +52,13 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
     "typescript": "^5.4.0",
+<<<<<<< HEAD
     "vite": "^5.2.0"
+=======
+    "vite": "^5.2.0",
+    "vitest": "^3.2.4",
+    "wait-on": "^7.2.0"
+>>>>>>> b7f37ce90e58c955d5e726f1d2a8421f4984a9a2
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -63,5 +70,74 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.2.3"
+<<<<<<< HEAD
+=======
+  },
+  "build": {
+    "appId": "com.langpackstudio.app",
+    "productName": "LangPack Studio",
+    "copyright": "Copyright © 2025 Sumire Labs",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!node_modules/**/*.d.ts",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable"
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "language": "1041",
+      "installerLanguages": [
+        "en_US",
+        "ja_JP"
+      ],
+      "artifactName": "LangPackStudio-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "category": "Development",
+      "icon": "build"
+    },
+    "portable": {
+      "artifactName": "LangPackStudio-Portable-${version}.${ext}"
+    }
+>>>>>>> b7f37ce90e58c955d5e726f1d2a8421f4984a9a2
   }
 }
